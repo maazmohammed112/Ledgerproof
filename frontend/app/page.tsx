@@ -23,7 +23,7 @@ import { Transaction, DecisionTrace } from './lib/types';
 import { store } from './lib/store';
 
 export default function Home() {
-  const [currentTab, setCurrentTab] = useState<string>('command-center');
+  const [currentTab, setCurrentTab] = useState<string>('landing');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeTrace, setActiveTrace] = useState<DecisionTrace | null>(null);
   const [activeTraceTx, setActiveTraceTx] = useState<Transaction | null>(null);
@@ -99,6 +99,36 @@ export default function Home() {
     (t) => t.category !== undefined && t.status !== 'RESOLVED' && t.status !== 'MANUALLY_APPROVED'
   ).length;
 
+  // 1. Standalone Landing Page View (Minimal Floating Header + Editorial Marketing Footer, No Dashboard Shell)
+  if (currentTab === 'landing') {
+    return (
+      <div className="min-h-screen bg-bg-primary text-text-primary antialiased selection:bg-accent-light selection:text-accent flex flex-col">
+        <LandingPageView
+          onLaunchCommandCenter={() => setCurrentTab('command-center')}
+          onOpenDecisionTrace={handleOpenDecisionTrace}
+          onStartGuidedTour={() => {
+            setCurrentTab('command-center');
+            setIsGuidedDemoOpen(true);
+          }}
+        />
+
+        {/* Decision Trace Modal */}
+        {activeTrace && activeTraceTx && (
+          <DecisionTraceModal
+            trace={activeTrace}
+            transaction={activeTraceTx}
+            onClose={() => {
+              setActiveTrace(null);
+              setActiveTraceTx(null);
+            }}
+            onOpenReviewModal={(tx) => setReviewTx(tx)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // 2. Full Enterprise Dashboard Shell (Command Center, Exceptions, Agent Lab, Audit, etc.)
   return (
     <div className="min-h-screen flex bg-bg-primary text-text-primary antialiased">
       {/* 1. Left Sidebar Navigation */}
@@ -136,13 +166,6 @@ export default function Home() {
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0">
-          {currentTab === 'landing' && (
-            <LandingPageView
-              onLaunchCommandCenter={() => setCurrentTab('command-center')}
-              onOpenDecisionTrace={handleOpenDecisionTrace}
-              onStartGuidedTour={() => setIsGuidedDemoOpen(true)}
-            />
-          )}
 
           {currentTab === 'command-center' && (
             <CommandCenterView
@@ -232,18 +255,22 @@ export default function Home() {
           {currentTab === 'built-with-ao' && <BuiltWithAoView />}
         </main>
 
-        {/* Modern Refined Footer */}
-        <footer className="bg-bg-secondary border-t border-border-subtle py-6 text-xs text-text-muted mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <div className="flex items-center space-x-2 text-text-primary">
-              <span className="font-serif font-semibold text-sm">LedgerProof</span>
-              <span>&bull;</span>
-              <span className="font-mono text-[11px] text-accent font-semibold">Track 2: Autonomous Office of the CFO</span>
+        {/* Dashboard Status Utility Footer */}
+        <footer className="bg-bg-secondary border-t border-border-subtle py-2.5 px-4 sm:px-6 text-xs text-text-muted mt-auto">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left text-[11px]">
+            <div className="flex items-center space-x-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-status-verified shrink-0" />
+              <span className="font-mono text-text-primary font-medium">Consensus: Active</span>
+              <span className="text-text-muted">&bull;</span>
+              <span>SHA-256 Vault Synced</span>
+              <span className="text-text-muted">&bull;</span>
+              <span className="text-text-secondary">Northstar Labs (US-GAAP)</span>
             </div>
-            <p className="text-text-secondary text-[11px]">
-              AI reasons. Code calculates. Humans judge exceptional risk.
-            </p>
-            <div className="flex items-center space-x-3 text-[11px]">
+            <div className="flex items-center space-x-3 text-text-muted">
+              <span>Latency: <strong className="text-text-primary font-mono font-medium">14.2ms</strong></span>
+              <span>&bull;</span>
+              <span>Runtime: <strong className="text-accent font-medium">Local Intelligence</strong></span>
+              <span>&bull;</span>
               <button 
                 onClick={() => setIsHelpOpen(true)} 
                 className="hover:text-text-primary transition-colors text-text-secondary"
@@ -257,8 +284,6 @@ export default function Home() {
               >
                 Settings
               </button>
-              <span>&bull;</span>
-              <span className="text-status-verified font-medium">Deterministic Consensus: Active</span>
             </div>
           </div>
         </footer>

@@ -19,7 +19,8 @@ import {
   FileCheck,
   TrendingUp,
   BarChart2,
-  Workflow
+  Workflow,
+  Github
 } from 'lucide-react';
 
 interface LandingPageViewProps {
@@ -36,8 +37,47 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   const [activeTabPreview, setActiveTabPreview] = useState<'cockpit' | 'trace' | 'audit'>('cockpit');
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary selection:bg-accent-light selection:text-accent">
+    <div className="min-h-screen bg-bg-primary text-text-primary selection:bg-accent-light selection:text-accent flex flex-col">
       
+      {/* MINIMAL FLOATING HEADER */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-border-subtle px-4 sm:px-8 py-3 flex items-center justify-between transition-all">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center shrink-0 shadow-sm border border-slate-800">
+            <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+              <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" strokeWidth="3.5" strokeLinecap="round"/>
+              <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <span className="font-serif text-xl tracking-tight text-text-primary font-semibold">LedgerProof</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-accent font-semibold px-1.5 py-0.5 rounded bg-accent-light/60 border border-accent/20">
+              Track 2
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          <a 
+            href="https://github.com/Untrivial-ai/agent-orchestrator" 
+            target="_blank" 
+            rel="noreferrer"
+            className="hidden sm:inline-flex items-center space-x-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors font-medium px-2 py-1 rounded hover:bg-black/5"
+          >
+            <Github className="w-3.5 h-3.5" />
+            <span>AO Build Docs</span>
+          </a>
+          <button
+            onClick={onLaunchCommandCenter}
+            className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-text-primary text-white text-xs font-medium hover:bg-black active:scale-[0.98] transition-all shadow-subtle"
+          >
+            <span>Open Dashboard</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </header>
+
       {/* 1. HERO SECTION */}
       <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
         
@@ -632,6 +672,85 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </button>
         </div>
       </section>
+
+      {/* 10. EDITORIAL MARKETING FOOTER */}
+      <footer className="bg-[#FAF9F6] border-t border-border-subtle pt-16 pb-12 text-text-secondary text-xs mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-10 pb-12 border-b border-border-subtle/80">
+            {/* Col 1: Brand & Mission */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-7 h-7 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center shrink-0">
+                  <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+                    <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" strokeWidth="3.5" strokeLinecap="round"/>
+                    <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span className="font-serif text-lg font-semibold text-text-primary">LedgerProof</span>
+              </div>
+              <p className="text-xs text-text-secondary leading-relaxed max-w-sm">
+                The Autonomous Finance Control Layer for enterprise close, reconciliation, and audit evidence. Finance agents should prove their work.
+              </p>
+              <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] font-mono text-accent">
+                <span className="px-2 py-0.5 rounded bg-accent-light/60 border border-accent/20">Track 2: Autonomous Office of the CFO</span>
+                <span className="text-text-muted">&bull;</span>
+                <span className="text-text-secondary">Built with Agent Orchestrator (AO)</span>
+              </div>
+            </div>
+
+            {/* Col 2: Control Layer */}
+            <div className="space-y-3">
+              <span className="font-semibold text-text-primary uppercase tracking-wider text-[11px] block">Control Layer</span>
+              <ul className="space-y-2 text-xs">
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Close Command Center</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">3-Way Reconciliation</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Independent Verifier</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Controller Review Queue</button></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Governance */}
+            <div className="space-y-3">
+              <span className="font-semibold text-text-primary uppercase tracking-wider text-[11px] block">Governance & Audit</span>
+              <ul className="space-y-2 text-xs">
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Cryptographic Audit Vault</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Deterministic Policy Bounds</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Double-Entry Invariants</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Multi-Currency Money Engine</button></li>
+              </ul>
+            </div>
+
+            {/* Col 4: Intelligence */}
+            <div className="space-y-3">
+              <span className="font-semibold text-text-primary uppercase tracking-wider text-[11px] block">Intelligence</span>
+              <ul className="space-y-2 text-xs">
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Agent Lab Playground</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Ground-Truth Evaluations</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Multi-Signal Duplicate Engine</button></li>
+                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Try Your Data (XLSX/CSV)</button></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-[11px] text-text-muted">
+            <div>
+              &copy; 2026 LedgerProof Technologies. Developed under Agent Orchestrator (AO) lifecycle.
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span>Offline-First (Zero Paid API Required)</span>
+              <span>&bull;</span>
+              <span>100% Light Mode Editorial</span>
+              <span>&bull;</span>
+              <button onClick={onStartGuidedTour} className="text-accent hover:underline font-medium">
+                Start Guided Tour
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
 
     </div>
   );

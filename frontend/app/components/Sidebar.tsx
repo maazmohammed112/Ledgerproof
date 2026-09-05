@@ -96,8 +96,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="flex items-center space-x-2.5 text-left group focus-visible:outline-none"
               title="LedgerProof Overview"
             >
-              <div className="w-7 h-7 rounded bg-text-primary text-white flex items-center justify-center font-serif text-sm font-semibold tracking-tight shrink-0 transition-transform group-hover:scale-105">
-                L
+              <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm border border-slate-800">
+                <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+                  <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" strokeWidth="3.5" strokeLinecap="round"/>
+                  <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
               {showLabels && (
                 <div className="flex items-baseline space-x-1.5 truncate">
