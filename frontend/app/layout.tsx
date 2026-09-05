@@ -15,6 +15,11 @@ export const metadata: Metadata = {
     'Audit Trail',
   ],
   authors: [{ name: 'LedgerProof Core Team' }],
+  icons: {
+    icon: '/brand/favicon.svg',
+    shortcut: '/brand/favicon.svg',
+    apple: '/brand/favicon.svg',
+  },
 };
 
 export const viewport: Viewport = {
