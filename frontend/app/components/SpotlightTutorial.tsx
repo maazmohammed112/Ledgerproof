@@ -121,10 +121,6 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
     };
   }, [isOpen, currentStepIndex, updateTargetPosition]);
 
-  if (!isOpen) return null;
-
-  const currentStep = currentStepIndex >= 0 && currentStepIndex < steps.length ? steps[currentStepIndex] : null;
-
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
@@ -147,6 +143,31 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
     } catch (e) {}
     onClose();
   };
+
+  // Keyboard navigation for tutorial
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleBack();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleComplete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, currentStepIndex]);
+
+  if (!isOpen) return null;
+
+  const currentStep = currentStepIndex >= 0 && currentStepIndex < steps.length ? steps[currentStepIndex] : null;
 
   // 1. Initial Welcome Prompt Modal (Start Tutorial or Skip)
   if (currentStepIndex === -1) {
@@ -199,7 +220,15 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
     );
   }
 
-  // 2. Element Spotlight Mode (Highlights target button/element with card attached)
+  // 2. Element Spotlight Mode (Highlights target button/element with docked card)
+  const isLowerHalf = targetRect 
+    ? targetRect.top > (typeof window !== 'undefined' ? window.innerHeight * 0.45 : 350) 
+    : false;
+
+  const cardLeftPos = targetRect 
+    ? Math.max(16, Math.min((typeof window !== 'undefined' ? window.innerWidth : 1024) - 460, targetRect.left)) 
+    : 24;
+
   return (
     <div className="fixed inset-0 z-50 pointer-events-none select-none">
       
@@ -220,23 +249,19 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
         />
       )}
 
-      {/* Interactive Tooltip Card positioned near the highlighted element */}
+      {/* Interactive Tooltip Card pinned safely within viewport */}
       <div 
-        className="absolute pointer-events-auto z-52 max-w-md w-[92vw] sm:w-[420px] transition-all duration-300"
+        className="fixed pointer-events-auto z-[60] max-w-md w-[92vw] sm:w-[440px] transition-all duration-300"
         style={{
-          top: targetRect 
-            ? `${Math.min(window.innerHeight - 340, Math.max(20, targetRect.bottom + 16))}px` 
-            : '50%',
-          left: targetRect 
-            ? `${Math.min(window.innerWidth - 440, Math.max(16, targetRect.left))}px` 
-            : '50%',
-          transform: !targetRect ? 'translate(-50%, -50%)' : 'none',
+          top: isLowerHalf ? '24px' : undefined,
+          bottom: !isLowerHalf ? '24px' : undefined,
+          left: `${cardLeftPos}px`,
         }}
       >
-        <div className="bg-white rounded-2xl border border-border-subtle shadow-modal p-5 sm:p-6 space-y-4 animate-scale-up">
+        <div className="bg-white rounded-2xl border border-border-subtle shadow-modal p-5 flex flex-col max-h-[min(480px,calc(100vh-48px))] animate-scale-up">
           
-          {/* Card Header: Step count & Category */}
-          <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+          {/* Card Header: FIXED AT TOP */}
+          <div className="shrink-0 flex items-center justify-between pb-3 border-b border-border-subtle">
             <div className="flex items-center space-x-2">
               <span className="px-2 py-0.5 rounded bg-accent text-white font-mono text-[10px] font-bold">
                 Step {currentStepIndex + 1} of {steps.length}
@@ -248,42 +273,45 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
             <button
               onClick={handleComplete}
               className="text-text-muted hover:text-text-primary p-1 rounded-md"
-              title="Close Tutorial"
+              title="Close Tutorial (Esc)"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Title & Core Description */}
-          <div className="space-y-1.5">
-            <h3 className="font-serif text-lg text-text-primary leading-snug">
-              {currentStep?.title}
-            </h3>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              {currentStep?.description}
-            </p>
+          {/* Card Body: SCROLLABLE IF CONTENT EXCEEDS HEIGHT */}
+          <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1 text-xs select-text">
+            <div className="space-y-1">
+              <h3 className="font-serif text-lg text-text-primary leading-snug">
+                {currentStep?.title}
+              </h3>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                {currentStep?.description}
+              </p>
+            </div>
+
+            {/* Why It Matters Callout */}
+            <div className="p-3 rounded-xl bg-bg-secondary border border-border-subtle space-y-1">
+              <span className="font-mono text-[10px] text-accent uppercase font-bold tracking-wider block">
+                Why This Safeguard Exists:
+              </span>
+              <p className="text-[11px] text-text-primary leading-relaxed">
+                {currentStep?.whyItMatters}
+              </p>
+            </div>
+
+            {/* Real Financial Example */}
+            <div className="text-[11px] text-text-secondary leading-relaxed bg-bg-subtle p-2.5 rounded-lg border border-border-subtle">
+              <strong className="text-text-primary font-medium">Real-World Case:</strong> {currentStep?.financialExample}
+            </div>
           </div>
 
-          {/* Why It Matters Callout */}
-          <div className="p-3 rounded-xl bg-bg-secondary border border-border-subtle space-y-1 text-xs">
-            <span className="font-mono text-[10px] text-accent uppercase font-bold tracking-wider block">
-              Why This Safeguard Exists:
-            </span>
-            <p className="text-[11px] text-text-primary leading-relaxed">
-              {currentStep?.whyItMatters}
-            </p>
-          </div>
-
-          {/* Real Financial Example */}
-          <div className="text-[11px] text-text-secondary leading-relaxed bg-bg-subtle p-2.5 rounded-lg border border-border-subtle">
-            <strong className="text-text-primary font-medium">Real-World Case:</strong> {currentStep?.financialExample}
-          </div>
-
-          {/* Footer Controls: Back, Next/Finish, Skip */}
-          <div className="pt-2 flex items-center justify-between gap-2 border-t border-border-subtle">
+          {/* Footer Controls: FIXED AT BOTTOM — ALWAYS VISIBLE AND CLICKABLE */}
+          <div className="shrink-0 pt-3 border-t border-border-subtle flex items-center justify-between gap-2 bg-white">
             <button
               onClick={handleComplete}
               className="text-[11px] font-medium text-text-muted hover:text-text-primary underline"
+              title="Skip Walkthrough (Esc)"
             >
               Skip Walkthrough
             </button>
@@ -292,6 +320,7 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
               <button
                 onClick={handleBack}
                 className="px-3 py-1.5 rounded-lg border border-border-subtle text-xs font-semibold text-text-secondary hover:bg-bg-subtle transition-colors flex items-center space-x-1"
+                title="Previous step (←)"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -299,9 +328,10 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
 
               <button
                 onClick={handleNext}
-                className="px-4 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-hover transition-colors shadow-subtle flex items-center space-x-1"
+                className="px-4 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-hover transition-colors shadow-subtle flex items-center space-x-1.5"
+                title="Next step (Enter / →)"
               >
-                <span>{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
+                <span>{currentStepIndex === steps.length - 1 ? 'Finish Tour' : 'Next Step'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

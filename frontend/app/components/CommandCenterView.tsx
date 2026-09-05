@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
 import { WorkflowCanvas } from './WorkflowCanvas';
+import { DataUploadModal } from './DataUploadModal';
 import { store } from '../lib/store';
 
 interface CommandCenterViewProps {
@@ -38,6 +39,7 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
   onOpenReviewModal,
 }) => {
   const [selectedQueueFilter, setSelectedQueueFilter] = useState<'ALL' | 'TIER_C' | 'BLOCKED'>('ALL');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const total = transactions.length;
   const autoCleared = transactions.filter((t) => t.status === 'RECONCILED' || t.status === 'AUTO_RECONCILED').length;
@@ -103,6 +105,14 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
             Review Queue ({humanReview})
           </button>
           <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs font-semibold text-text-primary bg-bg-secondary border border-border-subtle hover:bg-bg-subtle transition-colors shadow-subtle"
+            title="Upload CSV or Excel spreadsheets"
+          >
+            <UploadCloud className="w-3.5 h-3.5 text-accent" />
+            <span>Upload Data</span>
+          </button>
+          <button
             onClick={onRunClose}
             disabled={isRunningClose}
             className="flex items-center space-x-2 px-4 py-2 rounded-md text-xs font-semibold bg-accent text-white hover:bg-accent-hover active:scale-[0.98] transition-all shadow-subtle disabled:opacity-50"
@@ -127,7 +137,7 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
-              onClick={() => onNavigateToExceptions('ALL')}
+              onClick={() => setIsUploadModalOpen(true)}
               className="px-4 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-hover transition-colors shadow-subtle flex items-center space-x-2"
             >
               <UploadCloud className="w-4 h-4" />
@@ -151,6 +161,8 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
         <WorkflowCanvas 
           onOpenDecisionTrace={onOpenDecisionTrace}
           onNavigateToTab={(tab) => onNavigateToExceptions(tab)}
+          isDashboard={true}
+          isRunningClose={isRunningClose}
         />
       </div>
 
@@ -448,6 +460,15 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* CSV & Excel Data Ingestion Modal */}
+      <DataUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={(count, total) => {
+          onRunClose();
+        }}
+      />
 
     </div>
   );

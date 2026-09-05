@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { 
   Upload, 
   FileText, 
@@ -11,7 +12,9 @@ import {
   ArrowRight,
   Database,
   Check,
-  X
+  X,
+  FileSpreadsheet,
+  AlertTriangle
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
 import { store } from '../lib/store';
@@ -38,10 +41,11 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedTx, setProcessedTx] = useState<Transaction | null>(null);
 
-  // CSV State
+  // File & Ingestion State
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvRowsCount, setCsvRowsCount] = useState<number>(0);
+  const [parsedRawRows, setParsedRawRows] = useState<any[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({
     date: '',
     vendor: '',
@@ -49,6 +53,7 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
     gl_account: '',
     invoice_number: '',
     po_number: '',
+    description: '',
   });
 
   const handleManualSubmit = (e: React.FormEvent) => {
@@ -90,72 +95,164 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
     }, 900);
   };
 
+  const inferMapping = (headers: string[]) => {
+    const guessMap: Record<string, string> = {};
+    headers.forEach(h => {
+      const lower = h.toLowerCase();
+      if (lower.includes('date') || lower.includes('dt') || lower.includes('posted')) guessMap['date'] = h;
+      else if (lower.includes('vendor') || lower.includes('payee') || lower.includes('merchant') || lower.includes('counterparty') || lower.includes('supplier')) guessMap['vendor'] = h;
+      else if (lower.includes('amount') || lower.includes('total') || lower.includes('cost') || lower.includes('net') || lower.includes('val')) guessMap['amount'] = h;
+      else if (lower.includes('gl') || lower.includes('account') || lower.includes('category') || lower.includes('code')) guessMap['gl_account'] = h;
+      else if (lower.includes('inv') || lower.includes('bill') || lower.includes('ref')) guessMap['invoice_number'] = h;
+      else if (lower.includes('po') || lower.includes('order')) guessMap['po_number'] = h;
+      else if (lower.includes('desc') || lower.includes('memo') || lower.includes('line') || lower.includes('narration')) guessMap['description'] = h;
+    });
+    setColumnMapping(guessMap);
+  };
+
   const handleCsvSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setCsvFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length > 0) {
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
-        setCsvHeaders(headers);
-        setCsvRowsCount(lines.length - 1);
+    const fileName = file.name.toLowerCase();
 
-        // Auto guess mapping
-        const guessMap: Record<string, string> = {};
-        headers.forEach(h => {
-          const lower = h.toLowerCase();
-          if (lower.includes('date')) guessMap['date'] = h;
-          else if (lower.includes('vendor') || lower.includes('payee') || lower.includes('merchant')) guessMap['vendor'] = h;
-          else if (lower.includes('amount') || lower.includes('total') || lower.includes('cost')) guessMap['amount'] = h;
-          else if (lower.includes('gl') || lower.includes('account') || lower.includes('category')) guessMap['gl_account'] = h;
-          else if (lower.includes('inv')) guessMap['invoice_number'] = h;
-          else if (lower.includes('po')) guessMap['po_number'] = h;
-        });
-        setColumnMapping(guessMap);
-      }
-    };
-    reader.readAsText(file);
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const data = new Uint8Array(evt.target?.result as ArrayBuffer);
+          const wb = XLSX.read(data, { type: 'array' });
+          const firstSheet = wb.SheetNames[0];
+          const sheet = wb.Sheets[firstSheet];
+          const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          if (rows.length > 0) {
+            const headers = Object.keys(rows[0]);
+            setCsvHeaders(headers);
+            setCsvRowsCount(rows.length);
+            setParsedRawRows(rows);
+            inferMapping(headers);
+          }
+        } catch (err) {
+          console.error("Excel parse error:", err);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (fileName.endsWith('.json')) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const json = JSON.parse(evt.target?.result as string);
+          const rows = Array.isArray(json) ? json : [json];
+          if (rows.length > 0) {
+            const headers = Object.keys(rows[0]);
+            setCsvHeaders(headers);
+            setCsvRowsCount(rows.length);
+            setParsedRawRows(rows);
+            inferMapping(headers);
+          }
+        } catch (err) {
+          console.error("JSON parse error:", err);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      // Default CSV
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target?.result as string;
+          const wb = XLSX.read(text, { type: 'string' });
+          const firstSheet = wb.SheetNames[0];
+          const sheet = wb.Sheets[firstSheet];
+          const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          if (rows.length > 0) {
+            const headers = Object.keys(rows[0]);
+            setCsvHeaders(headers);
+            setCsvRowsCount(rows.length);
+            setParsedRawRows(rows);
+            inferMapping(headers);
+          }
+        } catch (err) {
+          console.error("CSV parse error:", err);
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleProcessCsv = () => {
+    if (parsedRawRows.length === 0) return;
     setIsProcessing(true);
-    setTimeout(() => {
-      const newItems: Transaction[] = [
-        {
-          id: `TX-CSV-${Math.floor(Math.random() * 8000) + 1000}`,
-          date: '2026-09-24',
-          vendor: 'CloudWorks Compute Node A',
-          description: 'Cloud compute autoscaling compute cycle',
-          amount: 25400.0,
-          currency: 'USD',
-          type: 'DEBIT',
-          gl_account: '6015 - Cloud Infrastructure & Hosting',
-          status: 'HUMAN_REVIEW_REQUIRED',
-          category: 'PO_VARIANCE',
-          confidence: 0.93,
-          risk_tier: 'TIER_C',
-          notes: 'Imported via CSV: 1.6% variance within CloudWorks tolerance.',
-        },
-        {
-          id: `TX-CSV-${Math.floor(Math.random() * 8000) + 1000}`,
-          date: '2026-09-25',
-          vendor: 'Datadog APM Subscription',
-          description: 'Monthly cloud APM monitoring subscription',
-          amount: 4200.0,
-          currency: 'USD',
-          type: 'DEBIT',
-          gl_account: '6020 - Software & SaaS Subscriptions',
-          status: 'AUTO_RECONCILED',
-          confidence: 0.98,
-          risk_tier: 'TIER_A',
-          notes: 'Imported via CSV: Clean 3-way match confirmed.',
-        },
-      ];
 
+    setTimeout(() => {
+      const existingTxs = store.getTransactions();
+      const existingInvoices = new Set(existingTxs.map(t => t.invoice_ref).filter(Boolean));
+      const seenInBatch = new Set<string>();
+
+      const newItems: Transaction[] = parsedRawRows.map((row, idx) => {
+        const rawAmt = row[columnMapping.amount] ?? row['amount'] ?? row['Amount'] ?? 0;
+        const cleanAmtStr = String(rawAmt).replace(/[$,€£₹\s]/g, '');
+        const amt = parseFloat(cleanAmtStr) || 0;
+
+        const dateVal = String(row[columnMapping.date] ?? row['date'] ?? row['Date'] ?? new Date().toISOString().split('T')[0]);
+        const vendorVal = String(row[columnMapping.vendor] ?? row['vendor'] ?? row['Vendor'] ?? `Vendor ${idx + 1}`);
+        const invRef = row[columnMapping.invoice_number] ?? row['invoice_number'] ?? row['Invoice'] ?? undefined;
+        const poRef = row[columnMapping.po_number] ?? row['po_number'] ?? row['PO'] ?? undefined;
+        const glVal = String(row[columnMapping.gl_account] ?? row['gl_account'] ?? row['GL'] ?? '6000 - General Operating Expense');
+        const descVal = String(row[columnMapping.description] ?? row['description'] ?? `Transaction for ${vendorVal}`);
+
+        const invStr = invRef ? String(invRef).trim() : '';
+        const isDuplicate = invStr && (existingInvoices.has(invStr) || seenInBatch.has(invStr));
+        if (invStr) seenInBatch.add(invStr);
+
+        const isMisclassified = vendorVal.toLowerCase().includes('aws') && glVal.includes('6400');
+        const isMaterialOverage = Math.abs(amt) >= 10000.0;
+
+        let riskTier: 'TIER_A' | 'TIER_B' | 'TIER_C' | 'TIER_D' = 'TIER_A';
+        let status: Transaction['status'] = 'AUTO_RECONCILED';
+        let category: Transaction['category'] | undefined = undefined;
+        let notes = `Verified via Autonomous Ingestion pipeline (${csvFile?.name || 'Uploaded file'}).`;
+
+        if (isDuplicate) {
+          riskTier = 'TIER_D';
+          status = 'BLOCKED';
+          category = 'DUPLICATE_INVOICE';
+          notes = `Independent Verifier hard block: Duplicate invoice ${invStr} detected. Disbursement rejected.`;
+        } else if (isMaterialOverage) {
+          riskTier = 'TIER_C';
+          status = 'HUMAN_REVIEW_REQUIRED';
+          category = 'PO_VARIANCE';
+          notes = `Transaction amount $${Math.abs(amt).toLocaleString()} exceeds $10,000 threshold. Queued for Human Controller review.`;
+        } else if (isMisclassified) {
+          riskTier = 'TIER_B';
+          status = 'RESOLVED';
+          category = 'GL_MISCLASSIFICATION';
+          notes = `Resolution proposal corrected by Independent Verifier to Cloud Hosting (GL 6010).`;
+        }
+
+        const txId = `TX-USER-${String(idx + 1).padStart(4, '0')}`;
+        return {
+          id: txId,
+          date: dateVal,
+          vendor: vendorVal,
+          description: descVal,
+          amount: Math.abs(amt),
+          currency: 'USD',
+          type: 'DEBIT',
+          gl_account: glVal,
+          status,
+          invoice_ref: invStr || undefined,
+          po_ref: poRef ? String(poRef) : undefined,
+          category,
+          confidence: isDuplicate ? 0.98 : 0.95,
+          risk_tier: riskTier,
+          notes,
+        };
+      });
+
+      // Switch to real data workspace so uploaded records are front and center
+      store.setDataMode('real');
       newItems.forEach(t => store.addTransaction(t));
       setIsProcessing(false);
       setProcessedTx(newItems[0]);
@@ -234,9 +331,9 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
             {/* Dropzone */}
             <label className="border border-dashed border-border-medium hover:border-accent rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors bg-bg-card text-center">
               <Upload className="w-7 h-7 text-accent mb-2" />
-              <span className="text-xs font-semibold text-text-primary">Click to select or drag & drop CSV</span>
-              <span className="text-[11px] text-text-muted mt-0.5">Standard comma-separated file</span>
-              <input type="file" accept=".csv" onChange={handleCsvSelect} className="hidden" />
+              <span className="text-xs font-semibold text-text-primary">Click to select or drag &amp; drop CSV, Excel, or JSON</span>
+              <span className="text-[11px] text-text-muted mt-0.5">Supports .csv, .xlsx, .xls, and .json</span>
+              <input type="file" accept=".csv,.xlsx,.xls,.json" onChange={handleCsvSelect} className="hidden" />
             </label>
 
             {csvFile && (
@@ -264,8 +361,8 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
               </div>
 
               {csvHeaders.length > 0 ? (
-                <div className="space-y-2.5 text-xs">
-                  {['vendor', 'amount', 'date', 'gl_account'].map((field) => (
+                <div className="space-y-2.5 text-xs max-h-56 overflow-y-auto pr-1">
+                  {['vendor', 'amount', 'date', 'gl_account', 'invoice_number', 'po_number'].map((field) => (
                     <div key={field} className="flex items-center justify-between">
                       <span className="text-text-secondary capitalize font-semibold">{field.replace('_', ' ')}:</span>
                       <select

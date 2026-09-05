@@ -47,17 +47,21 @@ interface WorkflowCanvasProps {
   onOpenDecisionTrace?: (txId: string) => void;
   onNavigateToTab?: (tab: string) => void;
   isCompact?: boolean;
+  isDashboard?: boolean;
+  isRunningClose?: boolean;
 }
 
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   onOpenDecisionTrace,
   onNavigateToTab,
   isCompact = false,
+  isDashboard = false,
+  isRunningClose = false,
 }) => {
   // Scenario selector
   const [activeScenario, setActiveScenario] = useState<'AWS_MISPOST' | 'STARLIGHT_DUP' | 'CLOUDWORKS_PO'>('AWS_MISPOST');
-  const [activeStepIndex, setActiveStepIndex] = useState<number>(5); // Default at Independent Verifier
-  const [isSimulating, setIsSimulating] = useState<boolean>(true);
+  const [activeStepIndex, setActiveStepIndex] = useState<number>(isDashboard ? -1 : 5);
+  const [isSimulating, setIsSimulating] = useState<boolean>(!isDashboard);
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
 
   // Define scenarios
@@ -94,7 +98,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Multi-Source Ingestion',
         role: 'Data Connectors',
         agentName: 'Ingestion Pipeline',
-        status: activeStepIndex >= 0 ? 'COMPLETED' : 'IDLE',
+        status: activeStepIndex > 0 ? 'COMPLETED' : activeStepIndex === 0 ? 'ACTIVE' : 'IDLE',
         latencyMs: 4.2,
         tags: ['Bank Feed', 'ERP Journal', 'Invoice OCR'],
         summary: isAws 
@@ -116,7 +120,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Schema & Currency Normalization',
         role: 'Data Quality Engine',
         agentName: 'Normalization Engine',
-        status: activeStepIndex >= 1 ? 'COMPLETED' : activeStepIndex === 0 ? 'ACTIVE' : 'IDLE',
+        status: activeStepIndex > 1 ? 'COMPLETED' : activeStepIndex === 1 ? 'ACTIVE' : 'IDLE',
         latencyMs: 3.8,
         tags: ['Decimal-Safe', 'ISO-4217', 'UTC Stamping'],
         summary: 'Parsed amount into exact integer cents ($8,420.00 = 842000 cents). Normalized UTC timestamp.',
@@ -134,7 +138,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Deterministic 3-Way Match',
         role: 'Arithmetic Matcher',
         agentName: 'Reconciliation Core',
-        status: activeStepIndex >= 2 ? 'COMPLETED' : activeStepIndex === 1 ? 'ACTIVE' : 'IDLE',
+        status: activeStepIndex > 2 ? 'COMPLETED' : activeStepIndex === 2 ? 'ACTIVE' : 'IDLE',
         latencyMs: 8.5,
         tags: ['PO Match', 'Invoice Match', 'Bank Rec'],
         summary: isAws 
@@ -156,7 +160,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Forensic Investigation Agent',
         role: 'Forensic Reasoning',
         agentName: 'Forensic Investigator',
-        status: activeStepIndex >= 3 ? 'COMPLETED' : activeStepIndex === 2 ? 'ACTIVE' : 'IDLE',
+        status: activeStepIndex > 3 ? 'COMPLETED' : activeStepIndex === 3 ? 'ACTIVE' : 'IDLE',
         latencyMs: 18.2,
         tags: ['Multi-Source', 'Historical Scan', 'Pydantic'],
         summary: isAws 
@@ -178,7 +182,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Resolution Formulation Agent',
         role: 'Proposal Formulation',
         agentName: 'Resolution Agent',
-        status: activeStepIndex >= 4 ? 'COMPLETED' : activeStepIndex === 3 ? 'ACTIVE' : 'IDLE',
+        status: activeStepIndex > 4 ? 'COMPLETED' : activeStepIndex === 4 ? 'ACTIVE' : 'IDLE',
         latencyMs: 14.5,
         tags: ['Journal Entry', 'Draft Proposal', 'Non-Executing'],
         summary: isAws 
@@ -200,9 +204,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Independent Adversarial Verifier',
         role: 'Dual-Agent Separation',
         agentName: 'Independent Verifier',
-        status: isAws 
-          ? (activeStepIndex >= 5 ? 'VETOED' : activeStepIndex === 4 ? 'ACTIVE' : 'IDLE')
-          : (activeStepIndex >= 5 ? 'COMPLETED' : activeStepIndex === 4 ? 'ACTIVE' : 'IDLE'),
+        status: activeStepIndex > 5 
+          ? (isAws ? 'VETOED' : 'COMPLETED') 
+          : activeStepIndex === 5 ? 'ACTIVE' : 'IDLE',
         latencyMs: 12.1,
         tags: ['Zero Self-Approval', 'Policy Check', 'Adversarial Veto'],
         summary: isAws 
@@ -224,11 +228,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Deterministic Autonomy Gate',
         role: 'Autonomy Governor',
         agentName: 'Autonomy Controller',
-        status: activeScenario === 'CLOUDWORKS_PO'
-          ? (activeStepIndex >= 6 ? 'WAITING_HUMAN' : activeStepIndex === 5 ? 'ACTIVE' : 'IDLE')
-          : isAws 
-          ? (activeStepIndex >= 6 ? 'COMPLETED' : activeStepIndex === 5 ? 'ACTIVE' : 'IDLE')
-          : (activeStepIndex >= 6 ? 'COMPLETED' : activeStepIndex === 5 ? 'ACTIVE' : 'IDLE'),
+        status: activeStepIndex > 6
+          ? (activeScenario === 'CLOUDWORKS_PO' ? 'WAITING_HUMAN' : 'COMPLETED')
+          : activeStepIndex === 6 ? 'ACTIVE' : 'IDLE',
         latencyMs: 2.1,
         tags: ['Tiers A-D', 'Materiality Bound', 'Human Review'],
         summary: activeScenario === 'CLOUDWORKS_PO' 
@@ -250,7 +252,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: 'Immutable SHA-256 Audit Vault',
         role: 'Cryptographic Ledger',
         agentName: 'Audit Vault',
-        status: activeStepIndex >= 7 ? 'COMPLETED' : activeStepIndex === 6 ? 'ACTIVE' : 'IDLE',
+        status: activeStepIndex >= 7 ? 'COMPLETED' : 'IDLE',
         latencyMs: 1.4,
         tags: ['SHA-256 Proof', 'SOX Compliant', 'Replayable'],
         summary: 'Anchored decision record, forensic evidence hashes, and verifier determination into cryptographic audit block #4083.',
@@ -267,7 +269,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
   const nodes = getNodes();
 
-  // Auto simulation loop
+  // Auto simulation loop (only runs on landing page or if explicitly un-paused)
   useEffect(() => {
     if (!isSimulating) return;
 
@@ -277,6 +279,24 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
     return () => clearInterval(timer);
   }, [isSimulating]);
+
+  // Live close execution trigger
+  useEffect(() => {
+    if (isRunningClose) {
+      setActiveStepIndex(0);
+      let step = 0;
+      const interval = setInterval(() => {
+        step += 1;
+        if (step >= 7) {
+          clearInterval(interval);
+          setActiveStepIndex(7);
+        } else {
+          setActiveStepIndex(step);
+        }
+      }, 200);
+      return () => clearInterval(interval);
+    }
+  }, [isRunningClose]);
 
   const activeNode = nodes[activeStepIndex] || nodes[0];
 
@@ -341,19 +361,27 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
           {/* Simulation Toggle */}
           <button
-            onClick={() => setIsSimulating(!isSimulating)}
+            onClick={() => {
+              if (!isSimulating && activeStepIndex === -1) {
+                setActiveStepIndex(0);
+              }
+              setIsSimulating(!isSimulating);
+            }}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-bg-secondary hover:bg-bg-subtle text-xs font-semibold text-text-primary transition-all shadow-subtle"
-            title={isSimulating ? 'Pause live flow' : 'Play live flow'}
+            title={isSimulating ? 'Pause flow' : 'Trigger simulation'}
           >
             {isSimulating ? <Pause className="w-3.5 h-3.5 text-accent" /> : <Play className="w-3.5 h-3.5 text-status-verified" />}
-            <span>{isSimulating ? 'Pause Flow' : 'Resume Flow'}</span>
+            <span>{isSimulating ? 'Pause Flow' : 'Simulate Flow'}</span>
           </button>
 
           {/* Reset Flow */}
           <button
-            onClick={() => setActiveStepIndex(0)}
+            onClick={() => {
+              setIsSimulating(false);
+              setActiveStepIndex(isDashboard ? -1 : 0);
+            }}
             className="p-1.5 rounded-lg border border-border-subtle bg-bg-secondary hover:bg-bg-subtle text-text-secondary hover:text-text-primary transition-all shadow-subtle"
-            title="Reset to Ingestion Step"
+            title={isDashboard ? 'Reset to Standby' : 'Reset to Ingestion Step'}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -362,23 +390,37 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
       {/* Live Active Status Banner */}
       <div className="my-4 p-3 rounded-xl bg-bg-subtle border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center space-x-2.5">
-          <div className="relative flex items-center justify-center">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-ping absolute opacity-75" />
-            <span className="w-2.5 h-2.5 rounded-full bg-accent relative" />
+        {isDashboard && !isRunningClose && !isSimulating ? (
+          <div className="flex items-center space-x-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-status-verified shrink-0" />
+            <div>
+              <span className="font-semibold text-text-primary">Pipeline Status:</span>{' '}
+              <span className="font-mono text-status-verified font-medium">Standby &bull; All 8 Nodes Ready</span>
+              <span className="text-text-muted mx-2">&bull;</span>
+              <span className="text-text-secondary text-[11px]">Click 'Run Close' or 'Simulate Flow' to trigger execution</span>
+            </div>
           </div>
-          <div>
-            <span className="font-semibold text-text-primary">Current Execution Step:</span>{' '}
-            <span className="font-mono text-accent font-medium">Node {activeNode.stepNumber}: {activeNode.label}</span>
-            <span className="text-text-muted mx-2">&bull;</span>
-            <span className="text-text-secondary text-[11px]">Active Persona: <strong>{activeNode.agentName}</strong></span>
+        ) : (
+          <div className="flex items-center space-x-2.5">
+            <div className="relative flex items-center justify-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-accent animate-ping absolute opacity-75" />
+              <span className="w-2.5 h-2.5 rounded-full bg-accent relative" />
+            </div>
+            <div>
+              <span className="font-semibold text-text-primary">
+                {isRunningClose ? 'Live Close Execution:' : 'Current Execution Step:'}
+              </span>{' '}
+              <span className="font-mono text-accent font-medium">Node {activeNode.stepNumber}: {activeNode.label}</span>
+              <span className="text-text-muted mx-2">&bull;</span>
+              <span className="text-text-secondary text-[11px]">Active Persona: <strong>{activeNode.agentName}</strong></span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex items-center space-x-3 text-[11px] font-mono">
           <span className="text-text-muted">Payload: <strong className="text-text-primary">{scenarios[activeScenario].name}</strong></span>
           <span className="text-border-medium">|</span>
-          <span className="text-text-muted">Step Latency: <strong className="text-text-primary">{activeNode.latencyMs}ms</strong></span>
+          <span className="text-text-muted">Step Latency: <strong className="text-text-primary">{activeStepIndex >= 0 ? `${activeNode.latencyMs}ms` : '0.0ms (idle)'}</strong></span>
         </div>
       </div>
 
