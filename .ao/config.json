@@ -1,0 +1,92 @@
+{
+  "project": {
+    "name": "ledgerproof",
+    "displayName": "LedgerProof — Autonomous Finance Control Layer",
+    "description": "Enterprise autonomous finance platform for Track 2 (Autonomous Office of the CFO)",
+    "version": "2.4.0",
+    "track": "Track 2 — Autonomous Office of the CFO",
+    "repository": "https://github.com/maazm/ledgerproof",
+    "aoVersion": "0.9.4"
+  },
+  "worktrees": {
+    "baseBranch": "main",
+    "prefix": "ao-session/",
+    "strategy": "isolated-git-worktree"
+  },
+  "browserPreview": {
+    "enabled": true,
+    "framework": "nextjs",
+    "command": "npm run dev",
+    "cwd": "frontend",
+    "port": 3000,
+    "url": "http://localhost:3000"
+  },
+  "workers": [
+    {
+      "name": "finance-core",
+      "objective": "Implement deterministic financial math, decimal calculator, and multi-currency engine",
+      "harness": "backend-python",
+      "scope": ["backend/app/core/", "frontend/app/lib/money.ts"]
+    },
+    {
+      "name": "data-ingestion",
+      "objective": "Build multi-sheet XLSX/CSV parser, smart column mapper, and data quality validator",
+      "harness": "fullstack-ts",
+      "scope": ["frontend/app/components/DataSourcesView.tsx", "frontend/app/lib/financeEngine.ts"]
+    },
+    {
+      "name": "reconciliation-engine",
+      "objective": "Build 3-way matching and multi-signal duplicate scoring engine",
+      "harness": "finance-ts",
+      "scope": ["frontend/app/lib/financeEngine.ts", "frontend/app/components/ReconciliationView.tsx"]
+    },
+    {
+      "name": "verifier-agent",
+      "objective": "Build adversarial Independent Verifier and deterministic Autonomy Gate",
+      "harness": "agent-orchestrator",
+      "scope": ["backend/app/agents/verifier.py", "frontend/app/lib/types.ts"]
+    },
+    {
+      "name": "frontend-redesign",
+      "objective": "Redesign editorial landing page, brand identity, and executive control plane",
+      "harness": "frontend-react",
+      "scope": ["frontend/app/components/LandingPageView.tsx", "frontend/app/components/ControlPlaneView.tsx", "frontend/public/brand/"]
+    },
+    {
+      "name": "agent-lab",
+      "objective": "Implement agent configuration studio, ground-truth benchmarks, and V1 vs V2 engine",
+      "harness": "eval-engine",
+      "scope": ["frontend/app/components/AgentLabView.tsx", "frontend/app/components/EvaluationLabView.tsx", "evals/"]
+    },
+    {
+      "name": "security-review",
+      "objective": "Audit formula injection, file MIME safety, and tamper-evident SHA-256 audit vault",
+      "harness": "security-analyst",
+      "scope": ["frontend/app/components/AuditVaultView.tsx", "docs/SECURITY.md"]
+    },
+    {
+      "name": "final-reviewer",
+      "objective": "Execute end-to-end CFO audit flow, cross-viewport QA, and judge walkthrough validation",
+      "harness": "qa-reviewer",
+      "scope": ["tests/", "docs/"]
+    }
+  ],
+  "reviewers": [
+    {
+      "role": "frontend-reviewer",
+      "checks": ["responsiveness", "overflow", "editorial-design-tokens", "accessibility", "state-consistency"]
+    },
+    {
+      "role": "finance-reviewer",
+      "checks": ["decimal-arithmetic", "duplicate-weighted-scoring", "reconciliation-accuracy", "currency-normalization", "materiality-thresholds"]
+    },
+    {
+      "role": "security-reviewer",
+      "checks": ["spreadsheet-formula-injection", "mime-validation", "zero-api-key-exposure", "audit-vault-immutability"]
+    },
+    {
+      "role": "final-judge-reviewer",
+      "checks": ["track-2-compliance", "autonomous-flow-integrity", "judge-wow-moment", "ao-evidence-fidelity"]
+    }
+  ]
+}
