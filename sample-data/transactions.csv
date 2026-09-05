@@ -1,0 +1,11 @@
+date,vendor,amount,currency,type,gl_account,invoice_number,po_number,description
+2026-09-02,Starlight Logistics,14500.00,USD,DEBIT,6300 - Freight & Shipping,INV-STR-4401,PO-9002,Standard freight delivery for hardware components
+2026-09-04,Amazon Web Services,8420.00,USD,DEBIT,6400 - Office Supplies & Administration,INV-AWS-9910,,Monthly us-east-1 compute cluster consumption
+2026-09-05,CloudWorks Infrastructure,26000.00,USD,DEBIT,6015 - Cloud Infrastructure & Hosting,INV-CW-7721,PO-9003,Monthly cloud usage compute cluster
+2026-09-12,Starlight Logistics,14500.00,USD,DEBIT,6300 - Freight & Shipping,INV-STR-4401-A,PO-9002,Logistics invoice duplicate submission
+2026-09-14,Apex Consulting Group,103000.00,USD,DEBIT,6120 - Professional Services & Legal,INV-APX-8802,PO-9001,Enterprise advisory milestone invoice (3% variance)
+2026-09-18,Datadog Operations,4200.00,USD,DEBIT,6020 - Software & SaaS Subscriptions,,,Monthly infrastructure monitoring AP balance
+2026-09-20,Unknown Global Ventures,18500.00,USD,DEBIT,9999 - Suspense Clearing,INV-UNK-009,,Offshore data conversion service
+2026-09-22,Tokyo Hardware Ltd,14210.00,USD,DEBIT,1500 - Lab Equipment & Hardware,INV-TYO-991,,Laboratory test fixture imported from Japan
+2026-09-25,Delta Air Lines,1250.00,USD,DEBIT,6500 - Travel & Entertainment,,,Executive ticket SFO-JFK customer summit
+2026-09-26,Google Workspace,1250.00,USD,DEBIT,6020 - Software & SaaS Subscriptions,INV-GW-909,,Monthly enterprise email & office suite

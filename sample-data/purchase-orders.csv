@@ -1,0 +1,7 @@
+"po_number","vendor","amount","currency","issue_date","status","gl_account","description"
+"PO-2026-092","Amazon Web Services Inc.",103000.00,"INR","2026-07-25","ACTIVE","6100","Monthly AWS Infrastructure commitment"
+"PO-2026-088","Datadog Inc.",4000.00,"USD","2026-07-28","ACTIVE","6200","Annual Datadog APM & Logs quota"
+"PO-2026-104","Swisscom AG",8450.00,"CHF","2026-08-01","ACTIVE","6150","Zurich & Geneva Tier-3 Colocation rack"
+"PO-2026-077","Herbert Smith Freehills LLP",3000.00,"GBP","2026-07-15","ACTIVE","6500","Series B Legal Advisory retainer"
+"PO-2026-110","Infosys Technologies Limited",2540000.00,"INR","2026-08-01","ACTIVE","6300","Q3 Offshore Engineering team"
+"PO-2026-099","OfficeMax Solutions",45000.00,"INR","2026-08-05","CLOSED","6400","Stationery and ergonomic keyboards"

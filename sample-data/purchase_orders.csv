@@ -1,0 +1,5 @@
+po_number,vendor,amount,currency,approved_by,gl_account,variance_tolerance_pct,status
+PO-9001,Apex Consulting Group,100000.00,USD,Sarah Jenkins (VP Finance),6120 - Professional Services & Legal,2.0,OPEN
+PO-9002,Starlight Logistics,14500.00,USD,David Miller (Supply Chain Dir),6300 - Freight & Shipping,2.0,OPEN
+PO-9003,CloudWorks Infrastructure,25000.00,USD,Alex Chen (CTO),6015 - Cloud Infrastructure & Hosting,2.0,OPEN
+PO-9004,WeWork Global Spaces,12800.00,USD,Sarah Jenkins (VP Finance),6200 - Rent & Facilities,1.0,OPEN

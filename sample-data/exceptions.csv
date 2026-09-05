@@ -1,0 +1,6 @@
+"exception_id","type","severity","transaction_id","vendor","amount","currency","reason","status","detected_at"
+"EXC-2026-001","DUPLICATE_INVOICE","HIGH","TRX-IN-8822","Amazon Web Services Inc.",103000.00,"INR","Identical amount and vendor within 48 hours of TRX-IN-8821","PENDING","2026-08-25T14:32:00Z"
+"EXC-2026-002","PO_VARIANCE","MEDIUM","TRX-US-1092","Datadog Inc.",4200.00,"USD","Billed amount $4,200 exceeds PO-2026-088 limit of $4,000 by 5%","REQUIRES_REVIEW","2026-08-05T09:15:00Z"
+"EXC-2026-003","GL_MISCLASSIFICATION","HIGH","TRX-IN-8821","AWS Cloud",103000.00,"INR","Resolution agent proposed 6400 (Office Supplies); Verifier rejected and mandated 6100 (Cloud Infrastructure)","RESOLVED","2026-08-01T11:20:00Z"
+"EXC-2026-004","MATERIALITY_BREACH","HIGH","NEFT-INF-0912","Infosys Technologies Limited",2540000.00,"INR","Transfer value exceeds single-sign-off threshold (₹10,00,000) requiring Dual CFO Approval","APPROVED","2026-08-15T16:45:00Z"
+"EXC-2026-005","POLICY_VARIANCE","LOW","INV-HSF-4412","Herbert Smith Freehills LLP",3500.00,"GBP","Invoice exceeds agreed retainer cap of £3,000 under AP-VARIANCE-02","REQUIRES_REVIEW","2026-08-12T10:00:00Z"
