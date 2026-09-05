@@ -1,0 +1,332 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import { Sidebar } from './components/Sidebar';
+import { TopHeader } from './components/TopHeader';
+import { SettingsModal } from './components/SettingsModal';
+import { HelpModal } from './components/HelpModal';
+import { LandingPageView } from './components/LandingPageView';
+import { CommandCenterView } from './components/CommandCenterView';
+import { ExceptionInboxView } from './components/ExceptionInboxView';
+import { DecisionTraceModal } from './components/DecisionTraceModal';
+import { HumanReviewModal } from './components/HumanReviewModal';
+import { AgentLabView } from './components/AgentLabView';
+import { EvaluationLabView } from './components/EvaluationLabView';
+import { PolicyCenterView } from './components/PolicyCenterView';
+import { TryYourDataView } from './components/TryYourDataView';
+import { AuditVaultView } from './components/AuditVaultView';
+import { ArchitectureView } from './components/ArchitectureView';
+import { BuiltWithAoView } from './components/BuiltWithAoView';
+import { GuidedDemoModal } from './components/GuidedDemoModal';
+
+import { Transaction, DecisionTrace } from './lib/types';
+import { store } from './lib/store';
+
+export default function Home() {
+  const [currentTab, setCurrentTab] = useState<string>('command-center');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [activeTrace, setActiveTrace] = useState<DecisionTrace | null>(null);
+  const [activeTraceTx, setActiveTraceTx] = useState<Transaction | null>(null);
+  const [reviewTx, setReviewTx] = useState<Transaction | null>(null);
+  const [isGuidedDemoOpen, setIsGuidedDemoOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isRunningClose, setIsRunningClose] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Initialize transactions from store
+  useEffect(() => {
+    setTransactions([...store.getTransactions()]);
+  }, []);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleResetDemo = () => {
+    store.resetDemo();
+    setTransactions([...store.getTransactions()]);
+    setActiveTrace(null);
+    setActiveTraceTx(null);
+    setReviewTx(null);
+    showToast("Northstar Labs demo environment restored to pristine initial state.");
+  };
+
+  const handleRunClose = () => {
+    setIsRunningClose(true);
+    setTimeout(() => {
+      // Simulate backend API sync or run locally
+      fetch('/api/close/run', { method: 'POST' }).catch(() => {});
+      setIsRunningClose(false);
+      setTransactions([...store.getTransactions()]);
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#4338CA', '#15803D', '#B45309'],
+      });
+      showToast("Close run completed. All eligible transactions reconciled and verified.");
+    }, 1200);
+  };
+
+  const handleOpenDecisionTrace = (txId: string) => {
+    const trace = store.getTrace(txId);
+    const tx = store.getTransaction(txId) || transactions.find(t => t.id === txId) || null;
+    setActiveTrace(trace);
+    setActiveTraceTx(tx);
+  };
+
+  const handleReviewAction = (
+    txId: string,
+    action: 'APPROVE' | 'REJECT' | 'REQUEST_EVIDENCE' | 'EDIT_RESOLUTION',
+    notes: string,
+    editedGl?: string
+  ) => {
+    const newStatus = action === 'REJECT' ? 'BLOCKED' : action === 'REQUEST_EVIDENCE' ? 'HUMAN_REVIEW_REQUIRED' : 'RESOLVED';
+    store.updateTransaction(txId, {
+      status: newStatus,
+      notes: `Controller Sign-Off: ${action} — ${notes}`,
+      gl_account: editedGl || store.getTransaction(txId)?.gl_account || '6000',
+    });
+    setTransactions([...store.getTransactions()]);
+    showToast(`Exception ${txId} updated: ${action} committed.`);
+
+    // Check if all are resolved
+    const remaining = store.getTransactions().filter(t => t.risk_tier === 'TIER_C' && t.status !== 'RESOLVED' && t.status !== 'MANUALLY_APPROVED');
+    if (remaining.length === 0) {
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.6 },
+      });
+    }
+  };
+
+  const openExceptionCount = transactions.filter(
+    (t) => t.category !== undefined && t.status !== 'RESOLVED' && t.status !== 'MANUALLY_APPROVED'
+  ).length;
+
+  return (
+    <div className="min-h-screen flex bg-bg-primary text-text-primary antialiased">
+      {/* 1. Left Sidebar Navigation */}
+      <Sidebar
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        onResetDemo={handleResetDemo}
+        onStartGuidedDemo={() => setIsGuidedDemoOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenHelp={() => setIsHelpOpen(true)}
+        exceptionCount={openExceptionCount}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+      />
+
+      {/* 2. Main Dashboard Application Shell */}
+      <div className="flex-1 flex flex-col min-w-0">
+        
+        {/* Top Header */}
+        <TopHeader
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          onRunClose={handleRunClose}
+          onResetDemo={handleResetDemo}
+          onStartGuidedDemo={() => setIsGuidedDemoOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenHelp={() => setIsHelpOpen(true)}
+          isRunningClose={isRunningClose}
+          transactions={transactions}
+          onOpenDecisionTrace={handleOpenDecisionTrace}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0">
+          {currentTab === 'landing' && (
+            <LandingPageView
+              onLaunchCommandCenter={() => setCurrentTab('command-center')}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+              onStartGuidedTour={() => setIsGuidedDemoOpen(true)}
+            />
+          )}
+
+          {currentTab === 'command-center' && (
+            <CommandCenterView
+              transactions={transactions}
+              onRunClose={handleRunClose}
+              isRunningClose={isRunningClose}
+              onNavigateToExceptions={(filter) => setCurrentTab('exceptions')}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+              onOpenReviewModal={(tx) => setReviewTx(tx)}
+            />
+          )}
+
+          {currentTab === 'exceptions' && (
+            <ExceptionInboxView
+              transactions={transactions}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+              onOpenReviewModal={(tx) => setReviewTx(tx)}
+            />
+          )}
+
+          {currentTab === 'decision-trace' && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+              <div className="text-center py-4 space-y-1">
+                <span className="text-xs font-semibold text-accent uppercase tracking-widest">Inspection Cockpit</span>
+                <h1 className="font-serif text-3xl sm:text-4xl text-text-primary">Autonomous Decision Trace</h1>
+                <p className="text-xs text-text-secondary max-w-xl mx-auto">
+                  Select an exception below to inspect its multi-agent telemetry, evidence chips, and Independent Verifier determination.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {transactions.filter(t => t.category !== undefined).map(tx => (
+                  <div
+                    key={tx.id}
+                    onClick={() => handleOpenDecisionTrace(tx.id)}
+                    className="bg-bg-card p-5 rounded-xl border border-border-subtle shadow-subtle hover:border-text-secondary/30 cursor-pointer transition-all space-y-2 hover:shadow-card"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-mono text-text-muted font-semibold">{tx.id}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        tx.risk_tier === 'TIER_D' 
+                          ? 'bg-status-blockedBg text-status-blocked border border-status-blockedBorder' 
+                          : 'bg-status-reviewBg text-status-review border border-status-reviewBorder'
+                      }`}>
+                        {tx.risk_tier}
+                      </span>
+                    </div>
+                    <h3 className="font-medium text-base text-text-primary">{tx.vendor}</h3>
+                    <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">{tx.notes}</p>
+                    <div className="pt-2 flex items-center justify-between border-t border-border-subtle text-xs font-tabular">
+                      <span className="font-semibold text-text-primary">
+                        ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-accent font-semibold text-[11px] hover:underline">Inspect Telemetry &rarr;</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentTab === 'agent-lab' && <AgentLabView />}
+
+          {currentTab === 'evaluations' && <EvaluationLabView />}
+
+          {currentTab === 'policies' && <PolicyCenterView />}
+
+          {currentTab === 'try-data' && (
+            <TryYourDataView
+              onAnalyzeSuccess={() => {
+                setTransactions([...store.getTransactions()]);
+                showToast("Data ingested and analyzed through multi-agent pipeline.");
+              }}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+            />
+          )}
+
+          {currentTab === 'audit-vault' && (
+            <AuditVaultView
+              transactions={transactions}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+            />
+          )}
+
+          {currentTab === 'architecture' && <ArchitectureView />}
+
+          {currentTab === 'built-with-ao' && <BuiltWithAoView />}
+        </main>
+
+        {/* Modern Refined Footer */}
+        <footer className="bg-bg-secondary border-t border-border-subtle py-6 text-xs text-text-muted mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex items-center space-x-2 text-text-primary">
+              <span className="font-serif font-semibold text-sm">LedgerProof</span>
+              <span>&bull;</span>
+              <span className="font-mono text-[11px] text-accent font-semibold">Track 2: Autonomous Office of the CFO</span>
+            </div>
+            <p className="text-text-secondary text-[11px]">
+              AI reasons. Code calculates. Humans judge exceptional risk.
+            </p>
+            <div className="flex items-center space-x-3 text-[11px]">
+              <button 
+                onClick={() => setIsHelpOpen(true)} 
+                className="hover:text-text-primary transition-colors text-text-secondary"
+              >
+                Docs & Guide
+              </button>
+              <span>&bull;</span>
+              <button 
+                onClick={() => setIsSettingsOpen(true)} 
+                className="hover:text-text-primary transition-colors text-text-secondary"
+              >
+                Settings
+              </button>
+              <span>&bull;</span>
+              <span className="text-status-verified font-medium">Deterministic Consensus: Active</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      {/* Decision Trace Modal */}
+      {activeTrace && activeTraceTx && (
+        <DecisionTraceModal
+          trace={activeTrace}
+          transaction={activeTraceTx}
+          onClose={() => {
+            setActiveTrace(null);
+            setActiveTraceTx(null);
+          }}
+          onOpenReviewModal={(tx) => setReviewTx(tx)}
+        />
+      )}
+
+      {/* Human Review Modal */}
+      {reviewTx && (
+        <HumanReviewModal
+          transaction={reviewTx}
+          onClose={() => setReviewTx(null)}
+          onSubmitReview={handleReviewAction}
+        />
+      )}
+
+      {/* Guided Demo Tour Modal */}
+      <GuidedDemoModal
+        isOpen={isGuidedDemoOpen}
+        onClose={() => setIsGuidedDemoOpen(false)}
+        onNavigateToTab={(tab) => setCurrentTab(tab)}
+        onOpenDecisionTrace={(txId) => handleOpenDecisionTrace(txId)}
+        onRunClose={handleRunClose}
+        onResetDemo={handleResetDemo}
+      />
+
+      {/* System Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={(newSettings) => showToast("Controller settings saved successfully.")}
+      />
+
+      {/* Documentation & Help Guide Modal */}
+      <HelpModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg bg-text-primary text-white text-xs font-medium shadow-modal animate-fade-in flex items-center space-x-2.5">
+          <span className="w-2 h-2 rounded-full bg-status-verified shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+    </div>
+  );
+}

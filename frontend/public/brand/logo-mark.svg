@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" width="48" height="48">
+  <!-- LedgerProof Geometric Mark: Two Parallel Ledger Lines forming an architectural L with precision verification check notch -->
+  <rect width="48" height="48" rx="10" fill="#0F172A" />
+  <!-- Upper Ledger Line / Evidence Rule -->
+  <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" stroke-width="3" stroke-linecap="round"/>
+  <!-- Primary Ledger Column L-Stem -->
+  <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Second Parallel Subledger Rule -->
+  <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Precision Verification Check Notch -->
+  <path d="M28 16L32 20L40 12" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

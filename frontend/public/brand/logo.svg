@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none" width="240" height="48">
+  <!-- LedgerProof Complete Logo: Geometric L-Mark + Editorial Serif Wordmark -->
+  <g transform="translate(0, 0)">
+    <rect width="44" height="44" rx="9" fill="#0F172A" />
+    <path d="M12 13H27C28.5 13 30 14.5 30 16" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M14 13V31C14 32.1 14.9 33 16 33H33" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M20 19V26C20 27.1 20.9 28 22 28H31" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M26 14L29 17L36 10" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <text x="56" y="29" font-family="'DM Serif Display', Georgia, serif" font-size="22" font-weight="500" fill="#0F172A" letter-spacing="-0.3">LedgerProof</text>
+  <text x="182" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="700" fill="#4F46E5" letter-spacing="1">CONTROL</text>
+</svg>
