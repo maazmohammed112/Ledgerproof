@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import confetti from 'canvas-confetti';
 import { Sidebar } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { SettingsModal } from './components/SettingsModal';
@@ -63,12 +62,6 @@ export default function Home() {
       fetch('/api/close/run', { method: 'POST' }).catch(() => {});
       setIsRunningClose(false);
       setTransactions([...store.getTransactions()]);
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#4338CA', '#15803D', '#B45309'],
-      });
       showToast("Close run completed. All eligible transactions reconciled and verified.");
     }, 1200);
   };
@@ -98,11 +91,7 @@ export default function Home() {
     // Check if all are resolved
     const remaining = store.getTransactions().filter(t => t.risk_tier === 'TIER_C' && t.status !== 'RESOLVED' && t.status !== 'MANUALLY_APPROVED');
     if (remaining.length === 0) {
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
+      showToast("All material exceptions resolved. Close period ready for final sign-off.");
     }
   };
 
