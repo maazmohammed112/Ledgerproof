@@ -1,0 +1,31 @@
+{
+  "suite_id": "SUITE-2026-08-CFO",
+  "evaluated_at": "2026-08-30T18:00:00Z",
+  "environment": "AO-Worker-Evaluations",
+  "ai_runtime": "Deterministic Finance Rules + Heuristic Engine (Local)",
+  "total_cases": 80,
+  "metrics": {
+    "decision_accuracy": 0.9625,
+    "duplicate_precision": 0.9750,
+    "duplicate_recall": 0.9820,
+    "policy_compliance": 0.9910,
+    "false_autonomous_approval": 0.0000,
+    "escalation_precision": 0.9500,
+    "completion_rate": 1.0000,
+    "average_latency_ms": 14.2
+  },
+  "versions": {
+    "current": "Agent v2.4 (Independent Verifier Enabled)",
+    "previous": "Agent v1.2 (Direct Execution)"
+  },
+  "comparison": {
+    "accuracy_delta": "+8.4%",
+    "false_approval_reduction": "-100.0% (Zero false approvals in v2.4)",
+    "verification_vetoes": 14
+  },
+  "failure_taxonomy": [
+    { "category": "AMBIGUOUS_INPUT", "count": 2, "percentage": 2.5 },
+    { "category": "MISSING_EVIDENCE", "count": 1, "percentage": 1.25 }
+  ],
+  "cost_accounting": "Local / Not applicable (Zero cloud LLM spend required)"
+}

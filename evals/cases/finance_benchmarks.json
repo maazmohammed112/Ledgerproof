@@ -1,0 +1,127 @@
+[
+  {
+    "case_id": "TC-001",
+    "category": "DUPLICATE_DETECTION",
+    "description": "Identical invoice number, same vendor, same amount within 2 days",
+    "input": {
+      "invoice_number": "INV-1092-A",
+      "vendor": "Amazon Web Services",
+      "amount": 103000,
+      "currency": "INR",
+      "date": "2026-08-03",
+      "prior_record": {
+        "invoice_number": "INV-1092-A",
+        "vendor": "Amazon Web Services Inc.",
+        "amount": 103000,
+        "date": "2026-08-01"
+      }
+    },
+    "expected_decision": "BLOCK_DUPLICATE",
+    "expected_risk": "HIGH",
+    "expected_policy": "AP-DUP-01"
+  },
+  {
+    "case_id": "TC-002",
+    "category": "GL_CLASSIFICATION",
+    "description": "AWS Cloud Hosting misclassified as Office Supplies - Verifier must veto",
+    "input": {
+      "vendor": "AWS EMEA SARL",
+      "description": "Monthly compute cluster instance billing",
+      "amount": 1250,
+      "currency": "EUR",
+      "proposed_gl": "6400",
+      "correct_gl": "6100"
+    },
+    "expected_decision": "REJECT_AND_RECLASSIFY",
+    "expected_risk": "HIGH",
+    "expected_policy": "GL-MAPPING-04"
+  },
+  {
+    "case_id": "TC-003",
+    "category": "PO_VARIANCE",
+    "description": "Invoice exceeds PO amount by 5%, exceeding allowed 2% threshold",
+    "input": {
+      "invoice_number": "INV-DDOG-8819",
+      "vendor": "Datadog Inc.",
+      "invoice_amount": 4200,
+      "po_amount": 4000,
+      "currency": "USD",
+      "variance_percent": 5.0
+    },
+    "expected_decision": "ESCALATE_HUMAN_REVIEW",
+    "expected_risk": "MEDIUM",
+    "expected_policy": "AP-VARIANCE-02"
+  },
+  {
+    "case_id": "TC-004",
+    "category": "PO_VARIANCE",
+    "description": "Invoice within permitted 1% variance - Auto Execute",
+    "input": {
+      "invoice_number": "INV-ZOOM-201",
+      "vendor": "Zoom Video Communications",
+      "invoice_amount": 502,
+      "po_amount": 500,
+      "currency": "USD",
+      "variance_percent": 0.4
+    },
+    "expected_decision": "AUTO_EXECUTE",
+    "expected_risk": "LOW",
+    "expected_policy": "AP-VARIANCE-02"
+  },
+  {
+    "case_id": "TC-005",
+    "category": "MATERIALITY_GATE",
+    "description": "Vendor transfer exceeds ₹10,00,000 dual CFO threshold",
+    "input": {
+      "vendor": "Infosys Technologies Limited",
+      "amount": 2540000,
+      "currency": "INR",
+      "normalized_usd": 30500,
+      "payment_method": "NEFT"
+    },
+    "expected_decision": "DUAL_AUTHORIZATION_REQUIRED",
+    "expected_risk": "HIGH",
+    "expected_policy": "TREASURY-AUTH-01"
+  },
+  {
+    "case_id": "TC-006",
+    "category": "EXACT_RECONCILIATION",
+    "description": "Bank transaction exactly matches GL entry and PO",
+    "input": {
+      "bank_ref": "TXN-CH-5510",
+      "gl_voucher": "JV-2026-0810",
+      "vendor": "Swisscom AG",
+      "amount": 8450,
+      "currency": "CHF"
+    },
+    "expected_decision": "AUTO_RECONCILE",
+    "expected_risk": "LOW",
+    "expected_policy": "REC-MATCH-01"
+  },
+  {
+    "case_id": "TC-007",
+    "category": "VENDOR_NORMALIZATION",
+    "description": "Fuzzy vendor 'AMZN Cloud Srvcs' resolved to 'Amazon Web Services Inc.'",
+    "input": {
+      "raw_vendor": "AMZN Cloud Srvcs",
+      "master_candidates": ["Amazon Web Services Inc.", "American Express", "Amgen Inc."]
+    },
+    "expected_decision": "RESOLVED_VENDOR",
+    "expected_risk": "LOW",
+    "expected_policy": "MASTER-DATA-01"
+  },
+  {
+    "case_id": "TC-008",
+    "category": "SUSPICIOUS_VELOCITY",
+    "description": "Three sequential transactions under $10,000 threshold within 1 hour",
+    "input": {
+      "vendor": "Unknown Consultant LLC",
+      "amounts": [9950, 9900, 9850],
+      "currency": "USD",
+      "interval_minutes": 45
+    },
+    "expected_decision": "FLAG_STRUCTURING_ANOMALY",
+    "expected_risk": "CRITICAL",
+    "expected_policy": "AML-STRUCTURING-01"
+  }
+]
