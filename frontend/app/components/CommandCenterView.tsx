@@ -13,9 +13,12 @@ import {
   Lock,
   ChevronRight,
   SlidersHorizontal,
-  ArrowRight
+  ArrowRight,
+  UploadCloud
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
+import { WorkflowCanvas } from './WorkflowCanvas';
+import { store } from '../lib/store';
 
 interface CommandCenterViewProps {
   transactions: Transaction[];
@@ -93,6 +96,7 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
 
         <div className="flex items-center space-x-2.5">
           <button
+            id="tour-review-queue-btn"
             onClick={() => onNavigateToExceptions('TIER_C')}
             className="px-3.5 py-2 rounded-md text-xs font-semibold text-text-primary bg-bg-secondary border border-border-subtle hover:bg-bg-subtle transition-colors"
           >
@@ -107,6 +111,47 @@ export const CommandCenterView: React.FC<CommandCenterViewProps> = ({
             <span>{isRunningClose ? 'Reconciling Ledger...' : 'Run Close'}</span>
           </button>
         </div>
+      </div>
+
+      {/* Real Data Clean Workspace Alert if in Real Mode with no data */}
+      {store.getDataMode() === 'real' && transactions.length === 0 && (
+        <div className="p-6 rounded-2xl bg-white border-2 border-dashed border-accent/40 shadow-card text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-accent-light text-accent mx-auto flex items-center justify-center">
+            <UploadCloud className="w-6 h-6" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="font-serif text-xl text-text-primary">Real Data Workspace Active</h3>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Demo records have been cleared. Upload your company's bank statements, invoice CSVs, or general ledger files to test autonomous reconciliation on your own data.
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => onNavigateToExceptions('ALL')}
+              className="px-4 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-hover transition-colors shadow-subtle flex items-center space-x-2"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Ingest Your CSV / Excel</span>
+            </button>
+            <button
+              onClick={() => {
+                store.setDataMode('demo');
+                onRunClose();
+              }}
+              className="px-4 py-2 rounded-lg border border-border-subtle text-xs font-semibold text-text-secondary hover:bg-bg-subtle transition-colors"
+            >
+              Switch Back to Demo Data
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 1.5. Interactive Real-Time Agent Execution Pipeline (n8n-style) */}
+      <div id="tour-workflow-pipeline" className="space-y-2">
+        <WorkflowCanvas 
+          onOpenDecisionTrace={onOpenDecisionTrace}
+          onNavigateToTab={(tab) => onNavigateToExceptions(tab)}
+        />
       </div>
 
       {/* 2. Primary Close Velocity Cockpit Card */}

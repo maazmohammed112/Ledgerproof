@@ -20,8 +20,10 @@ import {
   TrendingUp,
   BarChart2,
   Workflow,
-  Github
+  Github,
+  Zap
 } from 'lucide-react';
+import { WorkflowCanvas } from './WorkflowCanvas';
 
 interface LandingPageViewProps {
   onLaunchCommandCenter: () => void;
@@ -318,6 +320,27 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           )}
 
         </div>
+      </section>
+
+      {/* 2.5 INTERACTIVE REAL-TIME WORKFLOW DIAGRAM (n8n-STYLE SIMULATION) */}
+      <section className="pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-accent/10 border border-accent/20 text-accent text-xs font-mono font-semibold tracking-wide">
+            <Zap className="w-3.5 h-3.5 text-accent" />
+            <span>Interactive n8n-Style Execution Architecture</span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-text-primary font-normal">
+            How Autonomous Close Operates
+          </h2>
+          <p className="text-text-secondary text-sm sm:text-base leading-relaxed">
+            Watch financial data flow across 8 sequential deterministic nodes in real time. Click any node to inspect live machine telemetry, Python invariant rules, and adversarial consensus.
+          </p>
+        </div>
+
+        <WorkflowCanvas 
+          onOpenDecisionTrace={onOpenDecisionTrace}
+          onNavigateToTab={() => onLaunchCommandCenter()}
+        />
       </section>
 
       {/* 3. PROBLEM STATEMENT */}

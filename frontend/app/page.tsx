@@ -18,12 +18,14 @@ import { AuditVaultView } from './components/AuditVaultView';
 import { ArchitectureView } from './components/ArchitectureView';
 import { BuiltWithAoView } from './components/BuiltWithAoView';
 import { GuidedDemoModal } from './components/GuidedDemoModal';
+import { SpotlightTutorial } from './components/SpotlightTutorial';
 
 import { Transaction, DecisionTrace } from './lib/types';
 import { store } from './lib/store';
 
 export default function Home() {
   const [currentTab, setCurrentTab] = useState<string>('landing');
+  const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeTrace, setActiveTrace] = useState<DecisionTrace | null>(null);
   const [activeTraceTx, setActiveTraceTx] = useState<Transaction | null>(null);
@@ -36,14 +38,44 @@ export default function Home() {
   const [isRunningClose, setIsRunningClose] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Initialize transactions from store
+  // Initialize transactions & subscribe to store
   useEffect(() => {
+    setDataMode(store.getDataMode());
     setTransactions([...store.getTransactions()]);
-  }, []);
+
+    const unsubscribe = store.subscribe(() => {
+      setDataMode(store.getDataMode());
+      setTransactions([...store.getTransactions()]);
+    });
+
+    // Check if first-time user for tutorial
+    try {
+      const tourDone = localStorage.getItem('ledgerproof_tutorial_completed_v2');
+      if (!tourDone && currentTab !== 'landing') {
+        setIsGuidedDemoOpen(true);
+      }
+    } catch (e) {}
+
+    return () => unsubscribe();
+  }, [currentTab]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleSwitchDataMode = (mode: 'demo' | 'real') => {
+    store.setDataMode(mode);
+    setDataMode(mode);
+    setTransactions([...store.getTransactions()]);
+    setActiveTrace(null);
+    setActiveTraceTx(null);
+    setReviewTx(null);
+    if (mode === 'real') {
+      showToast("Switched to Real Data Workspace. Pre-loaded demo records cleared. Ready for your own data.");
+    } else {
+      showToast("Restored Northstar Labs demo dataset with multi-currency records and verified traces.");
+    }
   };
 
   const handleResetDemo = () => {
@@ -162,6 +194,8 @@ export default function Home() {
           isRunningClose={isRunningClose}
           transactions={transactions}
           onOpenDecisionTrace={handleOpenDecisionTrace}
+          dataMode={dataMode}
+          onSwitchDataMode={handleSwitchDataMode}
         />
 
         {/* Main Content Area */}
@@ -272,6 +306,14 @@ export default function Home() {
               <span>Runtime: <strong className="text-accent font-medium">Local Intelligence</strong></span>
               <span>&bull;</span>
               <button 
+                id="tour-audit-vault-link"
+                onClick={() => setCurrentTab('audit-vault')} 
+                className="hover:text-text-primary transition-colors text-text-secondary font-medium text-accent"
+              >
+                Audit Vault (SHA-256)
+              </button>
+              <span>&bull;</span>
+              <button 
                 onClick={() => setIsHelpOpen(true)} 
                 className="hover:text-text-primary transition-colors text-text-secondary"
               >
@@ -311,12 +353,11 @@ export default function Home() {
         />
       )}
 
-      {/* Guided Demo Tour Modal */}
-      <GuidedDemoModal
+      {/* Spotlight Interactive Element Walkthrough */}
+      <SpotlightTutorial
         isOpen={isGuidedDemoOpen}
         onClose={() => setIsGuidedDemoOpen(false)}
         onNavigateToTab={(tab) => setCurrentTab(tab)}
-        onOpenDecisionTrace={(txId) => handleOpenDecisionTrace(txId)}
         onRunClose={handleRunClose}
         onResetDemo={handleResetDemo}
       />

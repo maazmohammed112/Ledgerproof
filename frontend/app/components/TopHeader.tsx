@@ -33,6 +33,8 @@ interface TopHeaderProps {
   isRunningClose: boolean;
   transactions?: Transaction[];
   onOpenDecisionTrace?: (txId: string) => void;
+  dataMode?: 'demo' | 'real';
+  onSwitchDataMode?: (mode: 'demo' | 'real') => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -47,6 +49,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   isRunningClose,
   transactions = [],
   onOpenDecisionTrace,
+  dataMode = 'demo',
+  onSwitchDataMode,
 }) => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -228,6 +232,35 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           {/* Right Side: High-Value Actions & Tools */}
           <div className="flex items-center space-x-2 shrink-0">
             
+            {/* Data Mode Switcher (Demo Data vs Own Real Data) */}
+            <div 
+              id="tour-data-mode-toggle" 
+              className="flex items-center bg-bg-card p-0.5 rounded-lg border border-border-subtle shadow-subtle text-xs"
+            >
+              <button
+                onClick={() => onSwitchDataMode?.('demo')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  dataMode === 'demo'
+                    ? 'bg-accent text-white font-semibold shadow-sm'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+                title="Northstar Labs pre-configured multi-currency closing dataset"
+              >
+                Demo Data
+              </button>
+              <button
+                onClick={() => onSwitchDataMode?.('real')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  dataMode === 'real'
+                    ? 'bg-accent text-white font-semibold shadow-sm'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+                title="Clean workspace to import and test your own CSV/Excel data"
+              >
+                Use Real Data
+              </button>
+            </div>
+
             {/* Global Search Button */}
             <button
               onClick={() => setSearchModalOpen(true)}
@@ -243,9 +276,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
             {/* Guided Tour Trigger */}
             <button
+              id="tour-tutorial-btn"
               onClick={onStartGuidedDemo}
               className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle bg-bg-card hover:bg-black/[0.02] transition-colors shadow-subtle"
-              title="12-Step Controller Walkthrough"
+              title="Interactive Controller Walkthrough"
             >
               <Compass className="w-3.5 h-3.5 text-accent" />
               <span>Tour</span>
@@ -309,17 +343,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </div>
 
             {/* Reset Demo Button */}
-            <button
-              onClick={onResetDemo}
-              title="Reset Demo Dataset"
-              className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle bg-bg-card hover:bg-black/[0.02] transition-colors shadow-subtle"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
+            {dataMode === 'demo' && (
+              <button
+                onClick={onResetDemo}
+                title="Reset Demo Dataset"
+                className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle bg-bg-card hover:bg-black/[0.02] transition-colors shadow-subtle"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset</span>
+              </button>
+            )}
 
             {/* Primary Action: Run Close */}
             <button
+              id="tour-run-close-btn"
               onClick={onRunClose}
               disabled={isRunningClose}
               className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-accent text-white hover:bg-accent-hover active:scale-[0.98] transition-all shadow-subtle disabled:opacity-50"

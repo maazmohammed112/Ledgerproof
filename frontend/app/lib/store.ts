@@ -1,9 +1,9 @@
-import { 
-  Transaction, 
-  Policy, 
-  PolicyProposal, 
-  DecisionTrace, 
-  AuditRecord, 
+import {
+  Transaction,
+  Policy,
+  PolicyProposal,
+  DecisionTrace,
+  AuditRecord,
   EvaluationReport,
   Vendor,
   PurchaseOrder,
@@ -12,11 +12,11 @@ import {
   ConnectorItem,
   ControlPlaneAgentRun
 } from './types';
-import { 
-  INITIAL_TRANSACTIONS, 
-  INITIAL_POLICIES, 
-  INITIAL_PROPOSALS, 
-  WOW_DECISION_TRACE, 
+import {
+  INITIAL_TRANSACTIONS,
+  INITIAL_POLICIES,
+  INITIAL_PROPOSALS,
+  WOW_DECISION_TRACE,
   INITIAL_EVAL_REPORTS,
   INITIAL_VENDORS,
   INITIAL_PURCHASE_ORDERS,
@@ -54,6 +54,7 @@ const DEFAULT_SETTINGS: WorkspaceSettings = {
 };
 
 const STORAGE_KEYS = {
+  DATA_MODE: 'ledgerproof_data_mode_v2',
   TRANSACTIONS: 'ledgerproof_transactions_v2',
   POLICIES: 'ledgerproof_policies_v2',
   PROPOSALS: 'ledgerproof_proposals_v2',
@@ -65,11 +66,21 @@ const STORAGE_KEYS = {
   DATA_SOURCES: 'ledgerproof_data_sources_v2',
   AUDIT_RECORDS: 'ledgerproof_audit_records_v2',
   SETTINGS: 'ledgerproof_settings_v2',
+  // Real Data Keys
+  REAL_TRANSACTIONS: 'ledgerproof_real_transactions_v2',
+  REAL_VENDORS: 'ledgerproof_real_vendors_v2',
+  REAL_POS: 'ledgerproof_real_pos_v2',
+  REAL_INVOICES: 'ledgerproof_real_invoices_v2',
+  REAL_DATA_SOURCES: 'ledgerproof_real_data_sources_v2',
+  REAL_AUDIT: 'ledgerproof_real_audit_v2',
 };
 
 export class ClientStore {
   private static instance: ClientStore;
 
+  private dataMode: 'demo' | 'real' = 'demo';
+
+  // Demo Workspace Data
   private transactions: Transaction[] = [];
   private policies: Policy[] = [];
   private proposals: PolicyProposal[] = [];
@@ -83,6 +94,51 @@ export class ClientStore {
   private controlPlaneRuns: ControlPlaneAgentRun[] = [];
   private auditRecords: AuditRecord[] = [];
   private settings: WorkspaceSettings = { ...DEFAULT_SETTINGS };
+
+  // Real (User-Owned) Workspace Data
+  private realTransactions: Transaction[] = [];
+  private realVendors: Vendor[] = [];
+  private realPurchaseOrders: PurchaseOrder[] = [];
+  private realInvoices: Invoice[] = [];
+  private realDataSources: DataSourceItem[] = [];
+  private realAuditRecords: AuditRecord[] = [];
+  private listeners: Set<() => void> = new Set();
+
+  public subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify() {
+    this.listeners.forEach((fn) => {
+      try {
+        fn();
+      } catch (err) {
+        console.error("Store listener error:", err);
+      }
+    });
+  }
+
+  public getDataMode(): 'demo' | 'real' {
+    return this.dataMode;
+  }
+
+  public setDataMode(mode: 'demo' | 'real') {
+    this.dataMode = mode;
+    this.persist();
+    this.notify();
+  }
+
+  public clearRealData() {
+    this.realTransactions = [];
+    this.realVendors = [];
+    this.realPurchaseOrders = [];
+    this.realInvoices = [];
+    this.realDataSources = [];
+    this.realAuditRecords = [];
+    this.persist();
+    this.notify();
+  }
 
   private constructor() {
     this.init();
@@ -102,6 +158,12 @@ export class ClientStore {
     }
 
     try {
+      const storedMode = localStorage.getItem(STORAGE_KEYS.DATA_MODE);
+      if (storedMode === 'real' || storedMode === 'demo') {
+        this.dataMode = storedMode;
+      }
+
+      // 1. Load Demo Data
       const storedTxs = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
       this.transactions = storedTxs ? JSON.parse(storedTxs) : [...INITIAL_TRANSACTIONS];
 
@@ -137,6 +199,25 @@ export class ClientStore {
 
       this.connectors = [...INITIAL_CONNECTORS];
       this.controlPlaneRuns = [...INITIAL_CONTROL_PLANE_RUNS];
+
+      // 2. Load Real (User) Data
+      const storedRealTxs = localStorage.getItem(STORAGE_KEYS.REAL_TRANSACTIONS);
+      this.realTransactions = storedRealTxs ? JSON.parse(storedRealTxs) : [];
+
+      const storedRealVnd = localStorage.getItem(STORAGE_KEYS.REAL_VENDORS);
+      this.realVendors = storedRealVnd ? JSON.parse(storedRealVnd) : [];
+
+      const storedRealPOs = localStorage.getItem(STORAGE_KEYS.REAL_POS);
+      this.realPurchaseOrders = storedRealPOs ? JSON.parse(storedRealPOs) : [];
+
+      const storedRealInv = localStorage.getItem(STORAGE_KEYS.REAL_INVOICES);
+      this.realInvoices = storedRealInv ? JSON.parse(storedRealInv) : [];
+
+      const storedRealDS = localStorage.getItem(STORAGE_KEYS.REAL_DATA_SOURCES);
+      this.realDataSources = storedRealDS ? JSON.parse(storedRealDS) : [];
+
+      const storedRealAudit = localStorage.getItem(STORAGE_KEYS.REAL_AUDIT);
+      this.realAuditRecords = storedRealAudit ? JSON.parse(storedRealAudit) : [];
 
       if (!this.traces[WOW_DECISION_TRACE.transaction_id]) {
         this.traces[WOW_DECISION_TRACE.transaction_id] = WOW_DECISION_TRACE;
@@ -217,6 +298,7 @@ export class ClientStore {
   private persist() {
     if (typeof window === 'undefined') return;
     try {
+      localStorage.setItem(STORAGE_KEYS.DATA_MODE, this.dataMode);
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(this.transactions));
       localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(this.policies));
       localStorage.setItem(STORAGE_KEYS.PROPOSALS, JSON.stringify(this.proposals));
@@ -228,6 +310,14 @@ export class ClientStore {
       localStorage.setItem(STORAGE_KEYS.DATA_SOURCES, JSON.stringify(this.dataSources));
       localStorage.setItem(STORAGE_KEYS.AUDIT_RECORDS, JSON.stringify(this.auditRecords));
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
+
+      // Persist Real (User) Data
+      localStorage.setItem(STORAGE_KEYS.REAL_TRANSACTIONS, JSON.stringify(this.realTransactions));
+      localStorage.setItem(STORAGE_KEYS.REAL_VENDORS, JSON.stringify(this.realVendors));
+      localStorage.setItem(STORAGE_KEYS.REAL_POS, JSON.stringify(this.realPurchaseOrders));
+      localStorage.setItem(STORAGE_KEYS.REAL_INVOICES, JSON.stringify(this.realInvoices));
+      localStorage.setItem(STORAGE_KEYS.REAL_DATA_SOURCES, JSON.stringify(this.realDataSources));
+      localStorage.setItem(STORAGE_KEYS.REAL_AUDIT, JSON.stringify(this.realAuditRecords));
     } catch (e) {
       console.warn("Could not persist to localStorage:", e);
     }
@@ -236,8 +326,9 @@ export class ClientStore {
   public resetDemo() {
     this.loadDefaults();
     this.persist();
+    this.notify();
     if (typeof window !== 'undefined') {
-      fetch('/api/demo/reset', { method: 'POST' }).catch(() => {});
+      fetch('/api/demo/reset', { method: 'POST' }).catch(() => { });
     }
   }
 
@@ -249,49 +340,63 @@ export class ClientStore {
   public updateSettings(updates: Partial<WorkspaceSettings>) {
     this.settings = { ...this.settings, ...updates };
     this.persist();
+    this.notify();
   }
 
-  // Transactions CRUD
+  // Transactions CRUD (Mode Aware)
   public getTransactions(): Transaction[] {
-    return this.transactions;
+    return this.dataMode === 'real' ? this.realTransactions : this.transactions;
   }
 
   public getTransaction(id: string): Transaction | undefined {
-    return this.transactions.find((t) => t.id === id);
+    const list = this.dataMode === 'real' ? this.realTransactions : this.transactions;
+    return list.find((t) => t.id === id);
   }
 
   public addTransaction(tx: Transaction) {
-    this.transactions.unshift(tx);
+    if (this.dataMode === 'real') {
+      this.realTransactions.unshift(tx);
+    } else {
+      this.transactions.unshift(tx);
+    }
     this.persist();
+    this.notify();
   }
 
   public updateTransaction(id: string, updates: Partial<Transaction>) {
-    const idx = this.transactions.findIndex((t) => t.id === id);
+    const list = this.dataMode === 'real' ? this.realTransactions : this.transactions;
+    const idx = list.findIndex((t) => t.id === id);
     if (idx !== -1) {
-      this.transactions[idx] = { ...this.transactions[idx], ...updates };
+      list[idx] = { ...list[idx], ...updates };
       this.persist();
+      this.notify();
     }
   }
 
   public deleteTransaction(id: string) {
-    this.transactions = this.transactions.filter((t) => t.id !== id);
+    if (this.dataMode === 'real') {
+      this.realTransactions = this.realTransactions.filter((t) => t.id !== id);
+    } else {
+      this.transactions = this.transactions.filter((t) => t.id !== id);
+    }
     this.persist();
+    this.notify();
   }
 
   // True State Propagation for Human Review Actions
   public processHumanDecision(
-    txId: string, 
-    action: 'APPROVE' | 'REJECT' | 'REQUEST_EVIDENCE' | 'EDIT_RESOLUTION', 
+    txId: string,
+    action: 'APPROVE' | 'REJECT' | 'REQUEST_EVIDENCE' | 'EDIT_RESOLUTION',
     notes: string,
     editedGl?: string
   ) {
     const tx = this.getTransaction(txId);
     if (!tx) return;
 
-    const newStatus = action === 'REJECT' 
-      ? 'BLOCKED' 
-      : action === 'REQUEST_EVIDENCE' 
-        ? 'HUMAN_REVIEW_REQUIRED' 
+    const newStatus = action === 'REJECT'
+      ? 'BLOCKED'
+      : action === 'REQUEST_EVIDENCE'
+        ? 'HUMAN_REVIEW_REQUIRED'
         : 'RESOLVED';
 
     const finalGl = editedGl || tx.gl_account;
@@ -347,92 +452,139 @@ export class ClientStore {
   }
 
   // Audit Vault
+  // Audit Vault (Mode Aware)
   public getAuditRecords(): AuditRecord[] {
-    return this.auditRecords;
+    return this.dataMode === 'real' ? this.realAuditRecords : this.auditRecords;
   }
 
-  // Vendors CRUD
+  // Vendors CRUD (Mode Aware)
   public getVendors(): Vendor[] {
-    return this.vendors;
+    return this.dataMode === 'real' ? this.realVendors : this.vendors;
   }
 
   public addVendor(v: Vendor) {
-    this.vendors.unshift(v);
+    if (this.dataMode === 'real') {
+      this.realVendors.unshift(v);
+    } else {
+      this.vendors.unshift(v);
+    }
     this.persist();
+    this.notify();
   }
 
   public updateVendor(id: string, updates: Partial<Vendor>) {
-    const idx = this.vendors.findIndex((v) => v.id === id);
+    const list = this.dataMode === 'real' ? this.realVendors : this.vendors;
+    const idx = list.findIndex((v) => v.id === id);
     if (idx !== -1) {
-      this.vendors[idx] = { ...this.vendors[idx], ...updates };
+      list[idx] = { ...list[idx], ...updates };
       this.persist();
+      this.notify();
     }
   }
 
   public deleteVendor(id: string) {
-    this.vendors = this.vendors.filter((v) => v.id !== id);
+    if (this.dataMode === 'real') {
+      this.realVendors = this.realVendors.filter((v) => v.id !== id);
+    } else {
+      this.vendors = this.vendors.filter((v) => v.id !== id);
+    }
     this.persist();
+    this.notify();
   }
 
-  // Purchase Orders CRUD
+  // Purchase Orders CRUD (Mode Aware)
   public getPurchaseOrders(): PurchaseOrder[] {
-    return this.purchaseOrders;
+    return this.dataMode === 'real' ? this.realPurchaseOrders : this.purchaseOrders;
   }
 
   public addPurchaseOrder(po: PurchaseOrder) {
-    this.purchaseOrders.unshift(po);
+    if (this.dataMode === 'real') {
+      this.realPurchaseOrders.unshift(po);
+    } else {
+      this.purchaseOrders.unshift(po);
+    }
     this.persist();
+    this.notify();
   }
 
   public updatePurchaseOrder(id: string, updates: Partial<PurchaseOrder>) {
-    const idx = this.purchaseOrders.findIndex((p) => p.id === id);
+    const list = this.dataMode === 'real' ? this.realPurchaseOrders : this.purchaseOrders;
+    const idx = list.findIndex((p) => p.id === id);
     if (idx !== -1) {
-      this.purchaseOrders[idx] = { ...this.purchaseOrders[idx], ...updates };
+      list[idx] = { ...list[idx], ...updates };
       this.persist();
+      this.notify();
     }
   }
 
   public deletePurchaseOrder(id: string) {
-    this.purchaseOrders = this.purchaseOrders.filter((p) => p.id !== id);
+    if (this.dataMode === 'real') {
+      this.realPurchaseOrders = this.realPurchaseOrders.filter((p) => p.id !== id);
+    } else {
+      this.purchaseOrders = this.purchaseOrders.filter((p) => p.id !== id);
+    }
     this.persist();
+    this.notify();
   }
 
-  // Invoices CRUD
+  // Invoices CRUD (Mode Aware)
   public getInvoices(): Invoice[] {
-    return this.invoices;
+    return this.dataMode === 'real' ? this.realInvoices : this.invoices;
   }
 
   public addInvoice(inv: Invoice) {
-    this.invoices.unshift(inv);
+    if (this.dataMode === 'real') {
+      this.realInvoices.unshift(inv);
+    } else {
+      this.invoices.unshift(inv);
+    }
     this.persist();
+    this.notify();
   }
 
   public updateInvoice(id: string, updates: Partial<Invoice>) {
-    const idx = this.invoices.findIndex((i) => i.id === id);
+    const list = this.dataMode === 'real' ? this.realInvoices : this.invoices;
+    const idx = list.findIndex((i) => i.id === id);
     if (idx !== -1) {
-      this.invoices[idx] = { ...this.invoices[idx], ...updates };
+      list[idx] = { ...list[idx], ...updates };
       this.persist();
+      this.notify();
     }
   }
 
   public deleteInvoice(id: string) {
-    this.invoices = this.invoices.filter((i) => i.id !== id);
+    if (this.dataMode === 'real') {
+      this.realInvoices = this.realInvoices.filter((i) => i.id !== id);
+    } else {
+      this.invoices = this.invoices.filter((i) => i.id !== id);
+    }
     this.persist();
+    this.notify();
   }
 
-  // Data Sources
+  // Data Sources (Mode Aware)
   public getDataSources(): DataSourceItem[] {
-    return this.dataSources;
+    return this.dataMode === 'real' ? this.realDataSources : this.dataSources;
   }
 
   public addDataSource(ds: DataSourceItem) {
-    this.dataSources.unshift(ds);
+    if (this.dataMode === 'real') {
+      this.realDataSources.unshift(ds);
+    } else {
+      this.dataSources.unshift(ds);
+    }
     this.persist();
+    this.notify();
   }
 
   public deleteDataSource(id: string) {
-    this.dataSources = this.dataSources.filter((d) => d.id !== id);
+    if (this.dataMode === 'real') {
+      this.realDataSources = this.realDataSources.filter((d) => d.id !== id);
+    } else {
+      this.dataSources = this.dataSources.filter((d) => d.id !== id);
+    }
     this.persist();
+    this.notify();
   }
 
   // Connectors
