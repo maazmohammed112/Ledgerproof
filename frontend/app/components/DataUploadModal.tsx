@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
 import { store } from '../lib/store';
+import { detectCurrency } from '../lib/money';
 
 interface DataUploadModalProps {
   isOpen: boolean;
@@ -139,7 +140,7 @@ export const DataUploadModal: React.FC<DataUploadModalProps> = ({
       dateCol: findCol(['date', 'txn', 'posting', 'time']) || cols[0] || '',
       vendorCol: findCol(['vendor', 'narration', 'desc', 'payee', 'account name']) || cols[1] || '',
       amountCol: findCol(['amount', 'debit', 'total', 'value', 'price', 'credit']) || cols[2] || '',
-      currencyCol: findCol(['curr', 'iso']) || '',
+      currencyCol: findCol(['curr', 'ccy', 'iso', 'currency']) || '',
       glCol: findCol(['gl', 'account code', 'code']) || '',
     });
   };
@@ -176,15 +177,24 @@ export const DataUploadModal: React.FC<DataUploadModalProps> = ({
     setIsProcessing(true);
 
     setTimeout(() => {
+      const activeWs = store.getActiveWorkspace();
       let totalValue = 0;
       const newTransactions: Transaction[] = parsedRows.map((row, index) => {
-        const rawAmount = parseFloat(String(row[mapping.amountCol] || '0').replace(/[^0-9.-]+/g, '')) || 100;
-        const amount = Math.abs(rawAmount);
+        const rawAmountVal = row[mapping.amountCol] ?? '0';
+        const rawCurrCol = mapping.currencyCol ? String(row[mapping.currencyCol] || '') : undefined;
+        
+        // Comprehensive ISO-4217 Currency Detection (Requirement 10 & 11)
+        const { currency, cleanedAmount } = detectCurrency(rawAmountVal, {
+          explicitCurrencyColValue: rawCurrCol,
+          workspaceCountry: activeWs.country,
+          workspaceReportingCurrency: activeWs.reportingCurrency,
+        });
+
+        const amount = Math.abs(cleanedAmount) || 100;
         totalValue += amount;
 
         const vendor = String(row[mapping.vendorCol] || `Vendor ${index + 1}`).trim();
         const date = String(row[mapping.dateCol] || new Date().toISOString().split('T')[0]).trim();
-        const currency = String(row[mapping.currencyCol] || 'USD').toUpperCase().trim();
         const gl = String(row[mapping.glCol] || '6000').trim();
 
         // Check for duplicate or materiality signals
@@ -192,7 +202,7 @@ export const DataUploadModal: React.FC<DataUploadModalProps> = ({
         let status: 'RECONCILED' | 'EXCEPTION' | 'BLOCKED' = 'RECONCILED';
         let category: any = undefined;
 
-        if (amount >= 10000) {
+        if (amount >= (currency === 'INR' ? 1000000 : 10000)) {
           riskTier = 'TIER_C';
           status = 'EXCEPTION';
           category = 'MATERIAL_VARIANCE';
@@ -204,18 +214,21 @@ export const DataUploadModal: React.FC<DataUploadModalProps> = ({
 
         const tx: Transaction = {
           id: `TX-REAL-${Date.now().toString().slice(-4)}-${index + 1}`,
+          workspaceId: activeWs.id,
           date,
           vendor,
           description: `Imported transaction for ${vendor}`,
           amount,
-          currency: currency === 'INR' ? 'INR' : currency === 'EUR' ? 'EUR' : 'USD',
+          currency,
+          amount_original: amount,
+          currency_original: currency,
           type: 'DEBIT',
           status,
           risk_tier: riskTier,
           category,
           gl_account: gl,
           confidence: 0.96,
-          notes: `Imported from ${fileName || 'file'}: Normalized with ISO-4217 minor units.`,
+          notes: `Imported from ${fileName || 'file'}: Currency ${currency} detected and normalized.`,
         };
 
         return tx;

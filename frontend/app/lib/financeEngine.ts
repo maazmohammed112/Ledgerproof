@@ -183,7 +183,7 @@ export function calculateDuplicateScore(
   const amtDiff = Math.abs(tx.amount - candidate.amount);
   if (amtDiff < 0.01) {
     score += 0.20;
-    evidence.push(`Exact monetary amount match: $${tx.amount.toFixed(2)}`);
+    evidence.push(`Exact monetary amount match: ${tx.amount.toFixed(2)}`);
   } else if (tx.amount > 0 && amtDiff / tx.amount < 0.01) {
     score += 0.15;
     evidence.push(`Near-exact monetary amount (variance < 1%)`);
@@ -379,7 +379,11 @@ export function inferColumnMapping(headers: string[], sampleRows: RawRow[]): Col
 /**
  * Data Quality Engine: Inspects parsed rows and generates quality report
  */
-export function evaluateDataQuality(rows: RawRow[], fieldMap: InferredColumnMap): DataQualityReport {
+export function evaluateDataQuality(
+  rows: RawRow[], 
+  fieldMap: InferredColumnMap,
+  currencyContext?: { workspaceCountry?: string; workspaceReportingCurrency?: SupportedCurrency }
+): DataQualityReport {
   const issues: DataQualityIssue[] = [];
   const currenciesSet = new Set<string>();
   const vendorsSet = new Set<string>();
@@ -405,6 +409,7 @@ export function evaluateDataQuality(rows: RawRow[], fieldMap: InferredColumnMap)
     const amtVal = fieldMap.amountCol ? row[fieldMap.amountCol] : undefined;
     const drVal = fieldMap.debitCol ? row[fieldMap.debitCol] : undefined;
     const crVal = fieldMap.creditCol ? row[fieldMap.creditCol] : undefined;
+    const currColVal = fieldMap.currencyCol ? row[fieldMap.currencyCol] : undefined;
 
     const rawAmt = amtVal ?? drVal ?? crVal;
     if (rawAmt === undefined || rawAmt === null || String(rawAmt).trim() === '') {
@@ -417,7 +422,10 @@ export function evaluateDataQuality(rows: RawRow[], fieldMap: InferredColumnMap)
       });
       rowHasError = true;
     } else {
-      const { currency, cleanedAmount } = detectCurrency(rawAmt);
+      const { currency, cleanedAmount } = detectCurrency(rawAmt, {
+        ...currencyContext,
+        explicitCurrencyColValue: currColVal ? String(currColVal) : undefined,
+      });
       currenciesSet.add(currency);
       if (isNaN(cleanedAmount)) {
         issues.push({

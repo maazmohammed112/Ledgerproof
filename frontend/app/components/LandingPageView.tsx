@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   ArrowRight, 
@@ -21,9 +21,16 @@ import {
   BarChart2,
   Workflow,
   Github,
-  Zap
+  Zap,
+  Building2,
+  FileSpreadsheet,
+  Coins,
+  Check,
+  Play,
+  RotateCcw,
+  Sparkles,
+  ArrowUpRight
 } from 'lucide-react';
-import { WorkflowCanvas } from './WorkflowCanvas';
 
 interface LandingPageViewProps {
   onLaunchCommandCenter: () => void;
@@ -36,742 +43,782 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   onOpenDecisionTrace,
   onStartGuidedTour,
 }) => {
-  const [activeTabPreview, setActiveTabPreview] = useState<'cockpit' | 'trace' | 'audit'>('cockpit');
+  // Hero interactive simulation step
+  const [simulationStep, setSimulationStep] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSimulationStep((prev) => (prev + 1) % 4);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary selection:bg-accent-light selection:text-accent flex flex-col">
+    <div className="min-h-screen bg-bg-primary text-text-primary selection:bg-pastel-mint selection:text-text-primary flex flex-col antialiased">
       
-      {/* MINIMAL FLOATING HEADER */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-border-subtle px-4 sm:px-8 py-3 flex items-center justify-between transition-all">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center shrink-0 shadow-sm border border-slate-800">
-            <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-              <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" strokeWidth="3.5" strokeLinecap="round"/>
-              <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+      {/* 1. STICKY CLEAN NAVIGATION (Matching Reference 4) */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-border-subtle h-16 shrink-0 flex items-center px-4 sm:px-8 transition-all">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
+          
+          {/* Logo Brand Mark */}
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={onLaunchCommandCenter}>
+            <div className="w-8 h-8 rounded-lg bg-[#0E332E] p-1.5 flex items-center justify-center shrink-0 shadow-sm">
+              <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+                <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#DDF7EE" strokeWidth="3.5" strokeLinecap="round"/>
+                <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="flex items-baseline space-x-2">
+              <span className="font-serif text-xl tracking-tight text-text-primary font-semibold">LedgerProof</span>
+              <span className="hidden sm:inline text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-pastel-mint text-text-primary border border-pastel-mintBorder">
+                Autonomous Finance
+              </span>
+            </div>
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="font-serif text-xl tracking-tight text-text-primary font-semibold">LedgerProof</span>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-accent font-semibold px-1.5 py-0.5 rounded bg-accent-light/60 border border-accent/20">
-              Track 2
-            </span>
-          </div>
-        </div>
 
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <a 
-            href="https://github.com/Untrivial-ai/agent-orchestrator" 
-            target="_blank" 
-            rel="noreferrer"
-            className="hidden sm:inline-flex items-center space-x-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors font-medium px-2 py-1 rounded hover:bg-black/5"
-          >
-            <Github className="w-3.5 h-3.5" />
-            <span>AO Build Docs</span>
-          </a>
-          <button
-            onClick={onLaunchCommandCenter}
-            className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-text-primary text-white text-xs font-medium hover:bg-black active:scale-[0.98] transition-all shadow-subtle"
-          >
-            <span>Open Dashboard</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          {/* Center Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-7 text-xs font-medium text-text-secondary">
+            <a href="#capabilities" className="hover:text-text-primary transition-colors">Platform</a>
+            <a href="#adversarial" className="hover:text-text-primary transition-colors">Why LedgerProof</a>
+            <a href="#workflow" className="hover:text-text-primary transition-colors">How It Works</a>
+            <a href="#control-plane" className="hover:text-text-primary transition-colors">Agents</a>
+            <a href="#integrations" className="hover:text-text-primary transition-colors">Integrations</a>
+          </nav>
+
+          {/* Right Action Buttons */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={onLaunchCommandCenter}
+              className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors px-2 py-1.5"
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={onLaunchCommandCenter}
+              className="inline-flex items-center space-x-2 px-4 sm:px-5 py-2 rounded-full bg-[#0E332E] text-white text-xs font-semibold hover:bg-bg-darkHover active:scale-[0.98] transition-all shadow-subtle"
+            >
+              <span>Open Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* 1. HERO SECTION */}
-      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-        
-        {/* Product label */}
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-bg-subtle border border-border-subtle text-text-secondary text-xs font-medium tracking-wide mb-8">
-          <span className="w-2 h-2 rounded-full bg-status-verified" />
-          <span>Track 2 &bull; Autonomous Office of the CFO</span>
-        </div>
-
-        {/* Strong serif display headline */}
-        <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-text-primary font-normal leading-[1.08] max-w-4xl mx-auto">
-          Finance agents should <span className="italic text-accent">prove</span> their work.
-        </h1>
-
-        {/* Supporting text */}
-        <p className="mt-8 text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto font-normal leading-relaxed">
-          LedgerProof investigates, resolves, and independently verifies financial exceptions before they ever touch your general ledger.
-        </p>
-
-        {/* Primary CTAs */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
-            onClick={onLaunchCommandCenter}
-            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-7 py-3 rounded-md bg-accent text-white font-medium text-sm hover:bg-accent-hover active:scale-[0.98] transition-all shadow-subtle"
-          >
-            <span>Launch Demo</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={onStartGuidedTour}
-            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 rounded-md bg-white text-text-primary border border-border-subtle font-medium text-sm hover:bg-bg-subtle active:scale-[0.98] transition-all shadow-subtle"
-          >
-            <Compass className="w-4 h-4 text-accent" />
-            <span>See How It Works</span>
-          </button>
-        </div>
-
-      </section>
-
-      {/* 2. REAL PRODUCT PREVIEW (Interactive Cockpit) */}
-      <section className="pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-        <div className="bg-bg-secondary border border-border-subtle rounded-2xl shadow-card overflow-hidden">
+      {/* 2. HERO SECTION — 45% Text / 55% Visual (Matching Reference 4) */}
+      <section className="pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
-          {/* Cockpit Window Header */}
-          <div className="px-6 py-3.5 bg-bg-card border-b border-border-subtle flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-border-medium" />
-                <span className="w-2.5 h-2.5 rounded-full bg-border-medium" />
-                <span className="w-2.5 h-2.5 rounded-full bg-border-medium" />
-              </div>
-              <span className="font-mono text-xs text-text-muted">app.ledgerproof.internal &bull; Northstar Labs FY26 Sep Close</span>
+          {/* Left Column: 45% Typography & Actions */}
+          <div className="lg:col-span-5 space-y-6 sm:space-y-8 text-left">
+            
+            {/* Small Product Pill Badge */}
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-pastel-mint border border-pastel-mintBorder text-text-primary text-xs font-medium tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              <span>Track 2 &bull; Autonomous Office of the CFO</span>
             </div>
 
-            {/* Toggle Preview View */}
-            <div className="flex items-center space-x-1 bg-bg-subtle p-1 rounded-md text-xs">
+            {/* Giant Confident Display Headline */}
+            <h1 className="font-serif text-5xl sm:text-6xl xl:text-7xl tracking-tight text-text-primary font-normal leading-[1.05]">
+              Finance agents should prove their work.
+            </h1>
+
+            {/* Large Readable Body Text */}
+            <p className="text-base sm:text-lg text-text-secondary font-normal leading-relaxed max-w-xl">
+              LedgerProof reconciles financial data, investigates exceptions, independently verifies autonomous decisions, and escalates only when human judgment is required.
+            </p>
+
+            {/* Two Distinct Pill Buttons */}
+            <div className="flex flex-wrap items-center gap-3.5 pt-2">
               <button
-                onClick={() => setActiveTabPreview('cockpit')}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                  activeTabPreview === 'cockpit' ? 'bg-white text-text-primary shadow-subtle font-semibold' : 'text-text-secondary'
-                }`}
+                onClick={onLaunchCommandCenter}
+                className="inline-flex items-center space-x-2 px-7 py-3 rounded-full bg-[#0E332E] text-white text-sm font-semibold hover:bg-bg-darkHover active:scale-[0.98] transition-all shadow-subtle"
               >
-                Close Cockpit
+                <span>Open Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
+
               <button
-                onClick={() => setActiveTabPreview('trace')}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                  activeTabPreview === 'trace' ? 'bg-white text-text-primary shadow-subtle font-semibold' : 'text-text-secondary'
-                }`}
+                onClick={onStartGuidedTour}
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-pastel-mint text-text-primary border border-pastel-mintBorder text-sm font-semibold hover:bg-pastel-mint/80 active:scale-[0.98] transition-all shadow-subtle"
               >
-                Verifier Telemetry
+                <Compass className="w-4 h-4 text-emerald-700" />
+                <span>Take a Tour</span>
               </button>
-              <button
-                onClick={() => setActiveTabPreview('audit')}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                  activeTabPreview === 'audit' ? 'bg-white text-text-primary shadow-subtle font-semibold' : 'text-text-secondary'
-                }`}
-              >
-                Immutable Vault
-              </button>
+            </div>
+
+            {/* Micro Highlights */}
+            <div className="pt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-text-muted">
+              <span className="flex items-center space-x-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Zero Floating-Point Error</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Independent Verifier Gate</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>$0.00 External AI Cost</span>
+              </span>
             </div>
           </div>
 
-          {/* Preview Tab 1: Live Close Cockpit */}
-          {activeTabPreview === 'cockpit' && (
-            <div className="p-6 sm:p-8 space-y-6">
+          {/* Right Column: 55% Atmospheric Gradient Container & Floating Live Preview */}
+          <div className="lg:col-span-7">
+            <div className="rounded-3xl p-4 sm:p-7 bg-gradient-hero shadow-card border border-border-subtle relative overflow-hidden">
               
-              {/* Velocity Summary Banner */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-xl bg-bg-card border border-border-subtle">
-                <div>
-                  <div className="flex items-center space-x-2 text-xs text-text-secondary">
-                    <span className="w-2 h-2 rounded-full bg-status-verified" />
-                    <span className="font-semibold uppercase tracking-wider">Automated Month-End Close</span>
-                  </div>
-                  <h3 className="font-serif text-2xl text-text-primary mt-1">September 2026 Close Pipeline</h3>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <span className="text-xs text-text-muted block">Reconciliation Velocity</span>
-                    <span className="font-tabular font-semibold text-lg text-status-verified">97.4% Complete</span>
-                  </div>
-                  <div className="px-3 py-2 rounded-lg bg-status-verifiedBg border border-status-verifiedBorder font-tabular font-bold text-status-verified text-sm">
-                    4,082 / 4,128 Tx
-                  </div>
-                </div>
-              </div>
-
-              {/* Sophisticated Metrics Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-bg-card border border-border-subtle">
-                  <span className="text-xs text-text-muted block">Total Volume</span>
-                  <span className="font-tabular text-2xl font-semibold text-text-primary mt-1 block">$2,845,920.00</span>
-                  <span className="text-[11px] text-text-secondary mt-1 block">4,128 transactions</span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-bg-card border border-status-verifiedBorder bg-status-verifiedBg/30">
-                  <span className="text-xs text-status-verified font-medium block">Auto-Reconciled</span>
-                  <span className="font-tabular text-2xl font-semibold text-status-verified mt-1 block">$2,742,470.00</span>
-                  <span className="text-[11px] text-status-verified/80 mt-1 block">4,082 immaterial (Tier A/B)</span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-bg-card border border-status-reviewBorder bg-status-reviewBg/30">
-                  <span className="text-xs text-status-review font-medium block">Human Review Required</span>
-                  <span className="font-tabular text-2xl font-semibold text-status-review mt-1 block">3 Exceptions</span>
-                  <span className="text-[11px] text-status-review/80 mt-1 block">Material variance (Tier C)</span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-bg-card border border-status-blockedBorder bg-status-blockedBg/30">
-                  <span className="text-xs text-status-blocked font-medium block">Blocked by Verifier</span>
-                  <span className="font-tabular text-2xl font-semibold text-status-blocked mt-1 block">2 Exceptions</span>
-                  <span className="text-[11px] text-status-blocked/80 mt-1 block">Hard stop (Tier D)</span>
-                </div>
-              </div>
-
-              {/* Sample High-Priority Exception Card */}
-              <div className="p-5 rounded-xl bg-bg-card border border-border-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
+              {/* Inner Floating Clean White Product Card */}
+              <div className="bg-white rounded-2xl p-5 sm:p-7 shadow-modal border border-border-subtle/80 space-y-5">
+                
+                {/* Window Meta Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-border-subtle text-xs">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-mono font-semibold text-text-muted">TX-EXC-003</span>
-                    <span className="text-border-medium">&bull;</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-status-blockedBg text-status-blocked border border-status-blockedBorder">
-                      TIER D: HARD BLOCK
-                    </span>
-                    <span className="text-xs text-text-muted">AWS Monthly Cluster</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <span className="font-mono text-[11px] text-text-muted ml-2">app.ledgerproof.internal</span>
                   </div>
-                  <h4 className="font-medium text-base text-text-primary">Amazon Web Services &bull; Cloud Hosting Variance</h4>
-                  <p className="text-xs text-text-secondary">
-                    Investigation suggested 6400 (Office Supplies); Independent Verifier rejected and corrected to 6010 (Hosting).
-                  </p>
-                </div>
-
-                <div className="flex items-center space-x-4 shrink-0">
-                  <div className="text-right font-tabular">
-                    <span className="text-xs text-text-muted block">Materiality</span>
-                    <span className="font-semibold text-lg text-text-primary">$8,420.00</span>
-                  </div>
-                  <button
-                    onClick={() => onOpenDecisionTrace('TX-EXC-003')}
-                    className="px-4 py-2 rounded-md bg-accent text-white text-xs font-semibold hover:bg-accent-hover transition-colors"
-                  >
-                    Inspect Telemetry
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* Preview Tab 2: Verifier Telemetry */}
-          {activeTabPreview === 'trace' && (
-            <div className="p-6 sm:p-8 space-y-4 font-mono text-xs">
-              <div className="p-4 rounded-xl bg-status-blockedBg border border-status-blocked text-status-blocked flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <XCircle className="w-5 h-5 shrink-0" />
-                  <span className="font-bold">INDEPENDENT VERIFIER &bull; REJECTED PROPOSED RESOLUTION</span>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-status-blocked text-white text-[10px] font-bold">BLOCK COMMITTED</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-bg-card border border-border-subtle space-y-2">
-                  <span className="text-text-muted block text-[10px] uppercase font-bold">Agent 2: Resolution Agent</span>
-                  <div className="p-2.5 rounded bg-bg-subtle text-text-primary">
-                    Proposal: GL 6400 (Office Supplies) &bull; Confidence: 0.88
-                  </div>
-                  <p className="text-text-secondary text-[11px] font-sans">
-                    Extracted keyword "Supplies" from internal department notes. Proposed auto-approval without secondary verification.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-bg-card border border-status-verifiedBorder space-y-2">
-                  <span className="text-status-verified block text-[10px] uppercase font-bold">Agent 3: Independent Verifier</span>
-                  <div className="p-2.5 rounded bg-status-verifiedBg text-status-verified font-bold">
-                    Corrected: GL 6010 (Cloud Infrastructure & Hosting)
-                  </div>
-                  <p className="text-text-secondary text-[11px] font-sans">
-                    Checked 48 historical matches and Master Vendor Service Agreement. AWS is contractually classified as 6010. Misposting averted.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 bg-bg-subtle rounded-lg text-text-muted flex justify-between">
-                <span>Deterministic Check: policy_vendor_rule_v2.py passed in 4.2ms</span>
-                <span>Cryptographic Proof: e3b0c44298fc1c...</span>
-              </div>
-            </div>
-          )}
-
-          {/* Preview Tab 3: Immutable Vault */}
-          {activeTabPreview === 'audit' && (
-            <div className="p-6 sm:p-8 space-y-3 font-mono text-xs">
-              <div className="text-xs font-sans text-text-secondary mb-2">
-                Every verified decision is sealed into an append-only cryptographic event log.
-              </div>
-              <div className="divide-y divide-border-subtle bg-bg-card rounded-xl border border-border-subtle overflow-hidden">
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-text-primary font-bold">AUD-REC-0001</span> &bull; CloudWorks Ltd ($103,000.00)
-                  </div>
-                  <span className="text-status-review font-semibold">Tier C Escalation</span>
-                </div>
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-text-primary font-bold">AUD-REC-0002</span> &bull; Starlight Logistics ($14,500.00)
-                  </div>
-                  <span className="text-status-blocked font-semibold">Duplicate Blocked</span>
-                </div>
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-text-primary font-bold">AUD-REC-0003</span> &bull; Amazon Web Services ($8,420.00)
-                  </div>
-                  <span className="text-status-verified font-semibold">Verifier Overruled</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </section>
-
-      {/* 2.5 INTERACTIVE REAL-TIME WORKFLOW DIAGRAM (n8n-STYLE SIMULATION) */}
-      <section className="pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-accent/10 border border-accent/20 text-accent text-xs font-mono font-semibold tracking-wide">
-            <Zap className="w-3.5 h-3.5 text-accent" />
-            <span>Interactive n8n-Style Execution Architecture</span>
-          </div>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-text-primary font-normal">
-            How Autonomous Close Operates
-          </h2>
-          <p className="text-text-secondary text-sm sm:text-base leading-relaxed">
-            Watch financial data flow across 8 sequential deterministic nodes in real time. Click any node to inspect live machine telemetry, Python invariant rules, and adversarial consensus.
-          </p>
-        </div>
-
-        <WorkflowCanvas 
-          onOpenDecisionTrace={onOpenDecisionTrace}
-          onNavigateToTab={() => onLaunchCommandCenter()}
-        />
-      </section>
-
-      {/* 3. PROBLEM STATEMENT */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-border-subtle">
-        <div className="max-w-2xl">
-          <span className="text-xs font-semibold uppercase tracking-widest text-accent">The Core Risk in Autonomous Finance</span>
-          <h2 className="font-serif text-3xl sm:text-4xl text-text-primary font-normal mt-2 leading-tight">
-            Single-agent LLMs cannot be trusted with your general ledger.
-          </h2>
-          <p className="text-text-secondary mt-4 text-base leading-relaxed">
-            Standard AI agents rubber-stamp invoices, hallucinate tax formulas, and fail silent policy boundaries. In accounting, an unverified autonomous action is not an efficiency gain—it is an audit failure.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <div className="p-6 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="text-xs font-mono font-bold text-status-blocked uppercase block mb-2">Failure Mode 01</span>
-            <h3 className="font-serif text-xl text-text-primary">Arithmetic Hallucinations</h3>
-            <p className="text-xs text-text-secondary mt-2 leading-relaxed">
-              Language models struggle with floating-point variance tolerances and statutory withholding formulas. LedgerProof replaces prompt math with deterministic Python calculators.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="text-xs font-mono font-bold text-status-blocked uppercase block mb-2">Failure Mode 02</span>
-            <h3 className="font-serif text-xl text-text-primary">Self-Verification Bias</h3>
-            <p className="text-xs text-text-secondary mt-2 leading-relaxed">
-              When the agent that invents a resolution also verifies it, confirmation bias ensures errors pass undetected. LedgerProof enforces strict separation of duties.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="text-xs font-mono font-bold text-status-blocked uppercase block mb-2">Failure Mode 03</span>
-            <h3 className="font-serif text-xl text-text-primary">Unwarranted Autonomy</h3>
-            <p className="text-xs text-text-secondary mt-2 leading-relaxed">
-              Without hard deterministic materiality gates, agents auto-approve six-figure exceptions. LedgerProof enforces statutory human-in-the-loop triggers.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. HOW LEDGERPROOF WORKS: INVESTIGATE -> VERIFY -> ACT */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-border-subtle">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-semibold uppercase tracking-widest text-accent">Architecture Pipeline</span>
-          <h2 className="font-serif text-4xl sm:text-5xl text-text-primary font-normal mt-2">
-            Investigate. Verify. Act.
-          </h2>
-          <p className="text-text-secondary mt-4 text-sm sm:text-base">
-            A three-stage governance model that balances speed for immaterial items with mathematical certainty for material exceptions.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Stage 1 */}
-          <div className="bg-bg-secondary p-6 sm:p-8 rounded-2xl border border-border-subtle flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-lg bg-bg-primary border border-border-subtle flex items-center justify-center text-accent mb-6">
-                <FileSearch className="w-5 h-5 text-accent" />
-              </div>
-              <span className="text-[11px] font-mono font-bold text-accent uppercase tracking-wider">Stage 01</span>
-              <h3 className="font-serif text-2xl text-text-primary mt-1 mb-2">Investigate</h3>
-              <p className="text-xs text-text-secondary leading-relaxed">
-                Deterministic ingestion across vendor master agreements, purchase orders, subledgers, and historical posting logs. All context is structured into validated schemas.
-              </p>
-            </div>
-            <div className="mt-6 pt-4 border-t border-border-subtle text-[11px] font-mono text-text-muted">
-              Pydantic Evidence Schemas
-            </div>
-          </div>
-
-          {/* Stage 2 */}
-          <div className="bg-bg-secondary p-6 sm:p-8 rounded-2xl border border-border-subtle flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-lg bg-bg-primary border border-border-subtle flex items-center justify-center text-accent mb-6">
-                <Scale className="w-5 h-5 text-accent" />
-              </div>
-              <span className="text-[11px] font-mono font-bold text-accent uppercase tracking-wider">Stage 02</span>
-              <h3 className="font-serif text-2xl text-text-primary mt-1 mb-2">Verify</h3>
-              <p className="text-xs text-text-secondary leading-relaxed">
-                An adversarial Independent Verifier tests the proposed resolution against corporate accounting policies, arithmetic formulas, and historical variance distributions.
-              </p>
-            </div>
-            <div className="mt-6 pt-4 border-t border-border-subtle text-[11px] font-mono text-text-muted">
-              Adversarial Dual-Agent Consensus
-            </div>
-          </div>
-
-          {/* Stage 3 */}
-          <div className="bg-bg-secondary p-6 sm:p-8 rounded-2xl border border-border-subtle flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-lg bg-bg-primary border border-border-subtle flex items-center justify-center text-accent mb-6">
-                <Lock className="w-5 h-5 text-accent" />
-              </div>
-              <span className="text-[11px] font-mono font-bold text-accent uppercase tracking-wider">Stage 03</span>
-              <h3 className="font-serif text-2xl text-text-primary mt-1 mb-2">Act</h3>
-              <p className="text-xs text-text-secondary leading-relaxed">
-                Deterministic code computes Autonomy Tiers A through D. Routine items commit automatically; material variances route directly into the controller's sign-off inbox.
-              </p>
-            </div>
-            <div className="mt-6 pt-4 border-t border-border-subtle text-[11px] font-mono text-text-muted">
-              Deterministic Autonomy Tiers A-D
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* 5. AGENT DISAGREEMENT DEMO (Hero Product Moment) */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-border-subtle">
-        <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-6 sm:p-10 shadow-card">
-          
-          <div className="max-w-2xl mb-8">
-            <span className="text-xs font-semibold uppercase tracking-widest text-status-blocked">Forensic Proof</span>
-            <h2 className="font-serif text-3xl sm:text-4xl text-text-primary font-normal mt-1">
-              Watch two agents disagree.
-            </h2>
-            <p className="text-xs sm:text-sm text-text-secondary mt-2">
-              When an agent proposes a plausible misclassification, LedgerProof’s Independent Verifier halts execution before the general ledger is impacted.
-            </p>
-          </div>
-
-          {/* Forensic Comparison Card */}
-          <div className="bg-bg-card rounded-xl p-5 sm:p-6 border border-border-subtle space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border-subtle gap-2">
-              <div>
-                <span className="text-xs font-mono text-text-muted">TX-EXC-003</span>
-                <h4 className="font-medium text-text-primary">Amazon Web Services &bull; Monthly compute infrastructure</h4>
-              </div>
-              <div className="text-right font-tabular">
-                <span className="font-semibold text-lg text-text-primary">$8,420.00</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
-              {/* Resolution Agent */}
-              <div className="p-4 rounded-lg bg-bg-subtle border border-border-subtle space-y-3">
-                <div className="flex items-center space-x-2 text-xs font-semibold text-text-secondary">
-                  <Bot className="w-4 h-4 text-text-secondary" />
-                  <span>Resolution Agent (Generative Proposal)</span>
-                </div>
-                <div className="p-2.5 rounded bg-white border border-border-subtle">
-                  <span className="text-[10px] text-text-muted block uppercase font-bold">Proposed GL Account</span>
-                  <span className="text-xs font-semibold text-text-primary block mt-0.5">
-                    6400 &bull; Office Supplies & Administration
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pastel-mint text-text-primary border border-pastel-mintBorder">
+                    September Close &bull; Active
                   </span>
                 </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  "Classified as 6400 based on keyword match 'Supplies' in internal departmental memo."
-                </p>
-                <div className="text-[11px] font-mono text-text-muted">Confidence: 88% &bull; Proposed Action: AUTO_POST</div>
-              </div>
 
-              {/* Independent Verifier */}
-              <div className="p-4 rounded-lg bg-status-blockedBg border border-status-blockedBorder space-y-3">
-                <div className="flex items-center space-x-2 text-xs font-semibold text-status-blocked">
-                  <ShieldCheck className="w-4 h-4 text-status-blocked" />
-                  <span>Independent Verifier (Adversarial Check)</span>
+                {/* Animated Pipeline Simulation Ticker */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                        Reconciliation Velocity
+                      </div>
+                      <div className="font-serif text-3xl sm:text-4xl text-text-primary mt-0.5 font-normal">
+                        97.4% <span className="text-sm font-sans font-medium text-emerald-600">+2.4% vs last period</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-mono font-semibold bg-bg-primary border border-border-subtle">
+                        {simulationStep === 0 && "Step 1/4: Ingesting 5,420 Records"}
+                        {simulationStep === 1 && "Step 2/4: 5,301 Deterministic Matches"}
+                        {simulationStep === 2 && "Step 3/4: Investigating 87 Exceptions"}
+                        {simulationStep === 3 && "Step 4/4: Independent Verifier Active"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 4 Pastel Mini Cards inside Live Preview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                    
+                    <div className="p-3 rounded-xl bg-pastel-lime border border-pastel-limeBorder">
+                      <span className="text-[10px] uppercase font-semibold text-text-secondary block">Total Processed</span>
+                      <span className="font-serif text-lg font-normal text-text-primary block mt-0.5">$4.82M</span>
+                      <span className="text-[10px] text-text-muted">5,420 Txns</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-pastel-mint border border-pastel-mintBorder">
+                      <span className="text-[10px] uppercase font-semibold text-text-secondary block">Auto-Matched</span>
+                      <span className="font-serif text-lg font-normal text-text-primary block mt-0.5">5,301</span>
+                      <span className="text-[10px] text-emerald-700 font-medium">97.8% Clear</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-pastel-pink border border-pastel-pinkBorder">
+                      <span className="text-[10px] uppercase font-semibold text-text-secondary block">Verifier Blocks</span>
+                      <span className="font-serif text-lg font-normal text-status-blocked block mt-0.5">3</span>
+                      <span className="text-[10px] text-red-700 font-medium">Zero Self-Approval</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-pastel-lavender border border-pastel-lavenderBorder">
+                      <span className="text-[10px] uppercase font-semibold text-text-secondary block">Human Review</span>
+                      <span className="font-serif text-lg font-normal text-text-primary block mt-0.5">7</span>
+                      <span className="text-[10px] text-indigo-700 font-medium">Tier C Material</span>
+                    </div>
+
+                  </div>
+
+                  {/* Dynamic Simulation Event Banner */}
+                  <div className="p-3.5 rounded-xl bg-bg-primary border border-border-subtle flex items-center justify-between text-xs transition-all">
+                    <div className="flex items-center space-x-2.5 truncate">
+                      <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="truncate text-text-secondary">
+                        {simulationStep === 0 && "Normalizing multi-currency values across USD, EUR, INR, GBP, CHF..."}
+                        {simulationStep === 1 && "Deterministic 3-way match confirmed against bank feeds and general ledger."}
+                        {simulationStep === 2 && "Duplicate scan: Invoice #INV-8829 matched to existing disbursement."}
+                        {simulationStep === 3 && "Verifier vetoed Office Supplies proposal. Re-routed to Cloud Hosting."}
+                      </span>
+                    </div>
+                    <span className="text-emerald-700 font-semibold font-mono text-[11px] shrink-0 ml-2">VERIFIED</span>
+                  </div>
+
                 </div>
-                <div className="p-2.5 rounded bg-white border border-status-blockedBorder">
-                  <span className="text-[10px] text-status-blocked block uppercase font-bold">Verdict: REJECTED & OVERRULED</span>
-                  <span className="text-xs font-semibold text-status-verified block mt-0.5">
-                    Correct GL: 6010 &bull; Cloud Infrastructure & Hosting
-                  </span>
-                </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  "Cross-checked 48 historical reconciliations. Vendor contract mandates 6010. Prevented misposting."
-                </p>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-status-blocked uppercase">Tier D Hard Block</span>
-                  <button
-                    onClick={() => onOpenDecisionTrace('TX-EXC-003')}
-                    className="text-accent hover:underline font-semibold"
-                  >
-                    View Trace &rarr;
-                  </button>
-                </div>
+
               </div>
 
             </div>
-
-            {/* Banner outcome */}
-            <div className="p-3.5 rounded-lg bg-status-verifiedBg border border-status-verifiedBorder flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-2 text-text-primary font-medium">
-                <CheckCircle2 className="w-4 h-4 text-status-verified shrink-0" />
-                <span>Misposting averted. General Ledger protected by deterministic verification.</span>
-              </div>
-              <button
-                onClick={() => onOpenDecisionTrace('TX-EXC-003')}
-                className="hidden sm:inline-block text-[11px] font-semibold text-status-verified hover:underline"
-              >
-                Inspect Telemetry
-              </button>
-            </div>
-
           </div>
 
         </div>
       </section>
 
-      {/* 6. AUTONOMOUS CLOSE WORKFLOW */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-border-subtle">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-semibold uppercase tracking-widest text-accent">Operational Cadence</span>
-          <h2 className="font-serif text-4xl sm:text-5xl text-text-primary font-normal mt-2">
-            Close the books in hours, not weeks.
+      {/* 3. CAPABILITIES & INTEGRATION LOGO STRIP (Matching Reference 3) */}
+      <section className="py-8 border-y border-border-subtle bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted shrink-0">
+              Built for Sovereign Finance Stacks
+            </span>
+            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-8 gap-y-3 text-xs font-semibold text-text-secondary">
+              <span className="hover:text-text-primary transition-colors">SAP S/4HANA</span>
+              <span className="hover:text-text-primary transition-colors">Oracle NetSuite</span>
+              <span className="hover:text-text-primary transition-colors">QuickBooks Online</span>
+              <span className="hover:text-text-primary transition-colors">Stripe Billing</span>
+              <span className="hover:text-text-primary transition-colors">Snowflake Financials</span>
+              <span className="hover:text-text-primary transition-colors">PostgreSQL</span>
+              <span className="hover:text-text-primary transition-colors">Excel / CSV Multi-Currency</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. FEATURE GRID — 4 PASTEL CARDS (Matching Reference 2 & 3) */}
+      <section id="capabilities" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-12">
+        <div className="text-left space-y-3 max-w-2xl">
+          <span className="text-xs font-semibold uppercase tracking-widest text-emerald-800">
+            Platform Capabilities
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-text-primary leading-tight">
+            Autonomous finance is built differently here.
           </h2>
-          <p className="text-text-secondary mt-4 text-sm sm:text-base">
-            Autonomous velocity with human controllers focused only where financial materiality demands judgment.
+          <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
+            Every layer separates probabilistic AI reasoning from deterministic arithmetic, risk policies, and human controllers.
           </p>
         </div>
 
-        {/* Segmented Close Progression Flow */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="font-mono text-xs text-text-muted font-bold block mb-1">STEP 01</span>
-            <h4 className="font-serif text-lg text-text-primary">Subledger Ingestion</h4>
-            <p className="text-xs text-text-secondary mt-2">
-              AP, AR, and bank wire feeds parsed and normalized with deterministic checks.
-            </p>
+        {/* 4 Large Pastel Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Card 1: Reconciliation (Mint Pastel) */}
+          <div className="p-7 rounded-3xl bg-pastel-mint border border-pastel-mintBorder space-y-6 flex flex-col justify-between hover:shadow-card transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-text-primary shadow-subtle">
+                  Reconciliation
+                </span>
+                <span className="font-mono text-xs text-text-muted font-medium">97.4% Velocity</span>
+              </div>
+              <h3 className="font-serif text-2xl text-text-primary font-normal">
+                Deterministic 3-Way Reconciliation
+              </h3>
+              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                Matches transactions, purchase orders, invoices, and bank statements without floating-point anomalies. Integer minor units ensure absolute mathematical precision.
+              </p>
+            </div>
+
+            {/* Mini UI Preview */}
+            <div className="bg-white rounded-2xl p-4 shadow-subtle border border-border-subtle/60 space-y-2 text-xs font-tabular">
+              <div className="flex items-center justify-between pb-2 border-b border-border-subtle text-[11px] text-text-muted">
+                <span>Invoice vs Bank Settlement</span>
+                <span className="text-emerald-700 font-semibold font-mono">EXACT MATCH</span>
+              </div>
+              <div className="flex items-center justify-between font-medium">
+                <span>Datadog Cloud Monitoring</span>
+                <span className="font-bold">$4,850.00</span>
+              </div>
+              <div className="flex items-center justify-between text-text-muted text-[11px]">
+                <span>PO #PO-9821 &bull; Match Confidence 100%</span>
+                <span className="text-emerald-600">Auto-Cleared</span>
+              </div>
+            </div>
           </div>
 
-          <div className="p-5 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="font-mono text-xs text-text-muted font-bold block mb-1">STEP 02</span>
-            <h4 className="font-serif text-lg text-text-primary">2-Way & 3-Way Match</h4>
-            <p className="text-xs text-text-secondary mt-2">
-              97.4% immaterial transactions cleared automatically under strict $500/1% tolerances.
-            </p>
+          {/* Card 2: Exception Investigation (Aqua Pastel) */}
+          <div className="p-7 rounded-3xl bg-pastel-aqua border border-pastel-aquaBorder space-y-6 flex flex-col justify-between hover:shadow-card transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-text-primary shadow-subtle">
+                  Investigation
+                </span>
+                <span className="font-mono text-xs text-text-muted font-medium">Multi-Signal Scan</span>
+              </div>
+              <h3 className="font-serif text-2xl text-text-primary font-normal">
+                Forensic Exception Investigation
+              </h3>
+              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                When variances or duplicates occur, specialized reasoning agents inspect vendor contracts, temporal invoice proximity, and historical GL classifications.
+              </p>
+            </div>
+
+            {/* Mini UI Preview */}
+            <div className="bg-white rounded-2xl p-4 shadow-subtle border border-border-subtle/60 space-y-2 text-xs font-tabular">
+              <div className="flex items-center justify-between pb-2 border-b border-border-subtle text-[11px] text-text-muted">
+                <span>Duplicate Detection Matrix</span>
+                <span className="text-amber-700 font-semibold font-mono">98% SIMILARITY</span>
+              </div>
+              <div className="flex items-center justify-between font-medium">
+                <span>Starlight Logistics (#INV-4412)</span>
+                <span className="font-bold text-status-blocked">$14,500.00</span>
+              </div>
+              <div className="flex items-center justify-between text-text-muted text-[11px]">
+                <span>Disbursed 2 days prior under identical reference</span>
+                <span className="text-status-blocked font-medium">Disbursement Blocked</span>
+              </div>
+            </div>
           </div>
 
-          <div className="p-5 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="font-mono text-xs text-text-muted font-bold block mb-1">STEP 03</span>
-            <h4 className="font-serif text-lg text-text-primary">Adversarial Triage</h4>
-            <p className="text-xs text-text-secondary mt-2">
-              Exceptions investigated with multi-source evidence and adversarial verifier checks.
-            </p>
+          {/* Card 3: Independent Verification (Pink Pastel) */}
+          <div className="p-7 rounded-3xl bg-pastel-pink border border-pastel-pinkBorder space-y-6 flex flex-col justify-between hover:shadow-card transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-text-primary shadow-subtle">
+                  Adversarial Gate
+                </span>
+                <span className="font-mono text-xs text-text-muted font-medium">Zero Self-Approval</span>
+              </div>
+              <h3 className="font-serif text-2xl text-text-primary font-normal">
+                Independent Adversarial Verification
+              </h3>
+              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                Resolution agents formulate proposals; a completely separate adversarial verifier reviews them against compliance policies. Agents never approve their own entries.
+              </p>
+            </div>
+
+            {/* Mini UI Preview */}
+            <div className="bg-white rounded-2xl p-4 shadow-subtle border border-border-subtle/60 space-y-2 text-xs font-tabular">
+              <div className="flex items-center justify-between pb-2 border-b border-border-subtle text-[11px] text-text-muted">
+                <span>Amazon Web Services &bull; GL Posting</span>
+                <span className="text-status-blocked font-semibold font-mono">PROPOSAL VETOED</span>
+              </div>
+              <div className="flex items-center justify-between font-medium">
+                <span className="line-through text-text-muted">Proposed: Office Supplies (GL 6400)</span>
+                <span className="text-emerald-700 font-bold">Cloud Infra (GL 6020)</span>
+              </div>
+              <div className="flex items-center justify-between text-text-muted text-[11px]">
+                <span>Verifier corrected classification from 24mo history</span>
+                <span className="text-emerald-600 font-medium">Corrected & Posted</span>
+              </div>
+            </div>
           </div>
 
-          <div className="p-5 rounded-xl bg-bg-secondary border border-border-subtle">
-            <span className="font-mono text-xs text-text-muted font-bold block mb-1">STEP 04</span>
-            <h4 className="font-serif text-lg text-text-primary">Controller Sign-Off</h4>
-            <p className="text-xs text-text-secondary mt-2">
-              Material variances queued for 1-click human sign-off with audit-ready evidence packs.
-            </p>
+          {/* Card 4: Human Review & Materiality (Lime Pastel) */}
+          <div className="p-7 rounded-3xl bg-pastel-lime border border-pastel-limeBorder space-y-6 flex flex-col justify-between hover:shadow-card transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-text-primary shadow-subtle">
+                  Governance
+                </span>
+                <span className="font-mono text-xs text-text-muted font-medium">Tier C & D Limits</span>
+              </div>
+              <h3 className="font-serif text-2xl text-text-primary font-normal">
+                Human-in-the-Loop Materiality
+              </h3>
+              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                Deterministic ceilings strictly mandate controller sign-off on transactions over $10,000 (or ₹10,00,000 equivalent). Every decision anchors to an immutable SHA-256 audit vault.
+              </p>
+            </div>
+
+            {/* Mini UI Preview */}
+            <div className="bg-white rounded-2xl p-4 shadow-subtle border border-border-subtle/60 space-y-2 text-xs font-tabular">
+              <div className="flex items-center justify-between pb-2 border-b border-border-subtle text-[11px] text-text-muted">
+                <span>Materiality Ceiling Assessment</span>
+                <span className="text-amber-700 font-semibold font-mono">TIER C ESCALATION</span>
+              </div>
+              <div className="flex items-center justify-between font-medium">
+                <span>CloudWorks Server Migration</span>
+                <span className="font-bold">$42,800.00</span>
+              </div>
+              <div className="flex items-center justify-between text-text-muted text-[11px]">
+                <span>Requires CFO/Controller Digital Signature</span>
+                <span className="text-amber-700 font-medium">Pending Sign-Off</span>
+              </div>
+            </div>
           </div>
+
         </div>
       </section>
 
-      {/* 7. EVALUATION / BENCHMARK LAB */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-border-subtle">
-        <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-6 sm:p-10 shadow-card flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="max-w-md space-y-4">
-            <span className="text-xs font-semibold uppercase tracking-widest text-accent">Evaluation & Rigor</span>
-            <h2 className="font-serif text-3xl sm:text-4xl text-text-primary font-normal leading-tight">
-              Evaluated on 40 real-world edge cases.
+      {/* 5. "AI SHOULD NOT APPROVE ITSELF" — DUAL COMPARISON PANEL (Section 13) */}
+      <section id="adversarial" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="rounded-3xl bg-white border border-border-subtle p-8 sm:p-12 shadow-card space-y-10">
+          
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-status-blocked">
+              Zero Self-Approval Invariant
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-text-primary">
+              AI should not approve itself.
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-              LedgerProof is benchmarked continuously against duplicate billing, FX rounding, missing purchase orders, and tax mismatches.
+              When an enterprise close relies on single-pass autonomous agents, misclassifications slip directly into the general ledger. LedgerProof introduces an adversarial checkpoint.
             </p>
+          </div>
+
+          {/* Side-by-side Resolution vs Verifier Panels */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
             
-            <div className="flex items-center space-x-6 pt-2 font-tabular">
-              <div>
-                <span className="text-[11px] text-text-muted block">Agent V1 (Single LLM)</span>
-                <span className="text-2xl font-serif text-text-secondary font-semibold">75.0%</span>
+            {/* Left Panel: Resolution Agent */}
+            <div className="p-6 rounded-2xl bg-pastel-pink/50 border border-pastel-pinkBorder space-y-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold uppercase tracking-wider text-text-secondary">Agent 1: Resolution Agent</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">PROPOSAL</span>
               </div>
-              <ArrowRight className="w-4 h-4 text-accent" />
-              <div>
-                <span className="text-[11px] text-status-verified font-bold block">LedgerProof V2 (Ensemble)</span>
-                <span className="text-2xl font-serif text-status-verified font-semibold">95.0%</span>
+
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-text-primary">Amazon Web Services EMEA</div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Proposed posting invoice to <span className="font-semibold text-status-blocked">GL 6400 (Office Supplies)</span> based on surface keyword heuristics.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white border border-border-subtle text-xs font-tabular flex items-center justify-between">
+                <span>Proposed Amount: $8,420.00</span>
+                <span className="font-mono text-text-muted">Confidence: 72%</span>
               </div>
             </div>
+
+            {/* Right Panel: Independent Verifier */}
+            <div className="p-6 rounded-2xl bg-pastel-mint/50 border border-pastel-mintBorder space-y-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold uppercase tracking-wider text-text-secondary">Agent 2: Independent Verifier</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">VERIFIER VETO</span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-text-primary">Adversarial Evaluation</div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  <span className="font-bold text-status-blocked">REJECTED PROPOSAL</span> &bull; Verified 24 months historical MSA contracts. AWS is strictly categorized as <span className="font-semibold text-emerald-700">GL 6020 (Cloud Infrastructure)</span>.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white border border-border-subtle text-xs font-tabular flex items-center justify-between">
+                <span className="text-emerald-700 font-semibold">Corrected Posting Committed</span>
+                <span className="font-mono text-emerald-700 font-bold">100% Policy Compliant</span>
+              </div>
+            </div>
+
           </div>
 
-          <div className="w-full md:w-80 p-5 rounded-xl bg-bg-card border border-border-subtle shadow-subtle space-y-3 text-xs font-tabular">
-            <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
-              <span className="font-semibold text-text-primary">Benchmark Improvements</span>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-status-verifiedBg text-status-verified font-bold">+20.0% Accuracy</span>
+          {/* Outcome Strip */}
+          <div className="p-4 rounded-xl bg-pastel-mint border border-pastel-mintBorder flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center space-x-3">
+              <div className="w-7 h-7 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold">
+                ✓
+              </div>
+              <span className="font-semibold text-text-primary">
+                Potential financial misstatement of $8,420.00 automatically intercepted and prevented.
+              </span>
             </div>
-
-            <div className="flex justify-between items-center py-1">
-              <span className="text-text-secondary">False Auto-Approvals</span>
-              <span className="font-semibold text-status-verified font-mono">5.0% &rarr; 0.0%</span>
-            </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-text-secondary">Tax Calculation Errors</span>
-              <span className="font-semibold text-status-verified font-mono">12.5% &rarr; 0.0%</span>
-            </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-text-secondary">Escalation Precision</span>
-              <span className="font-semibold text-status-verified font-mono">82.0% &rarr; 97.4%</span>
-            </div>
+            <button
+              onClick={() => onOpenDecisionTrace('TX-EXC-003')}
+              className="text-xs font-semibold text-text-primary hover:underline shrink-0"
+            >
+              Inspect Telemetry Trace &rarr;
+            </button>
           </div>
+
         </div>
       </section>
 
-      {/* 8. AUDITABILITY & CRYPTOGRAPHIC PROOF */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-border-subtle">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-semibold uppercase tracking-widest text-accent">Auditor Ready</span>
-          <h2 className="font-serif text-3xl sm:text-4xl text-text-primary font-normal mt-1">
-            Built for Controllers. Proven to Auditors.
+      {/* 6. AGENT CONTROL PLANE SECTION (Section 14 & Reference 3) */}
+      <section id="control-plane" className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="rounded-3xl p-8 sm:p-12 bg-gradient-lavender-pink border border-pastel-lavenderBorder space-y-8">
+          
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-widest text-indigo-800">
+                Multi-Agent Architecture
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-normal text-text-primary mt-1">
+                Autonomous Finance Control Plane
+              </h2>
+              <p className="text-xs sm:text-sm text-text-secondary mt-1">
+                Six specialized worker sessions operating under deterministic policy boundaries.
+              </p>
+            </div>
+            <button
+              onClick={onLaunchCommandCenter}
+              className="px-5 py-2.5 rounded-full bg-white text-text-primary text-xs font-semibold hover:bg-bg-subtle transition-all shadow-subtle shrink-0"
+            >
+              View Live Control Plane
+            </button>
+          </div>
+
+          {/* 6 Agent Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            
+            <div className="p-5 rounded-2xl bg-white shadow-subtle border border-border-subtle space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-text-muted">Agent 01</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">ACTIVE</span>
+              </div>
+              <h4 className="font-semibold text-sm text-text-primary">Reconciliation Engine</h4>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Deterministic 3-way matching across bank feeds, ERP ledgers, and open invoices.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white shadow-subtle border border-border-subtle space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-text-muted">Agent 02</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">ACTIVE</span>
+              </div>
+              <h4 className="font-semibold text-sm text-text-primary">Duplicate Investigator</h4>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                4-signal weighted scoring for duplicate invoices, vendor aliases, and fuzzy references.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white shadow-subtle border border-border-subtle space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-text-muted">Agent 03</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">ACTIVE</span>
+              </div>
+              <h4 className="font-semibold text-sm text-text-primary">Variance Investigator</h4>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Evaluates PO tolerances, line-item price deltas, and shipping surcharges.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white shadow-subtle border border-border-subtle space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-text-muted">Agent 04</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">PROPOSING</span>
+              </div>
+              <h4 className="font-semibold text-sm text-text-primary">Resolution Agent</h4>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Synthesizes forensic evidence and formulates proposed journal adjustments.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white shadow-subtle border border-border-subtle space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-text-muted">Agent 05</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">VERIFYING</span>
+              </div>
+              <h4 className="font-semibold text-sm text-text-primary">Independent Verifier</h4>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Zero-tolerance adversarial audit. Validates arithmetic, policies, and evidence integrity.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white shadow-subtle border border-border-subtle space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-text-muted">Agent 06</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">GOVERNOR</span>
+              </div>
+              <h4 className="font-semibold text-sm text-text-primary">Controller Sign-Off Gate</h4>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Deterministic materiality checks. Routes Tier C/D items strictly to human controllers.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* 7. REAL DATA WORKFLOW SECTION (Section 15) */}
+      <section id="workflow" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-12">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-widest text-emerald-800">
+            Real Data Pipeline
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-text-primary">
+            From raw files to verified close.
           </h2>
-          <p className="text-text-secondary mt-3 text-sm leading-relaxed">
-            Every step—from data extraction to arithmetic verification and controller sign-off—is hashed and exportable for Big-4 audit inspection.
+          <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+            Create an isolated company workspace, import dirty CSV or Excel sheets, and let LedgerProof run the deterministic close cycle.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-bg-secondary border border-border-subtle grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-          <div className="space-y-1">
-            <span className="font-mono font-bold text-text-primary block">Immutable SHA-256 Hashes</span>
-            <p className="text-text-secondary">
-              Every decision trace records cryptographic input/output hashes, preventing post-facto tampering.
+        {/* 4 Connected Step Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div className="p-6 rounded-3xl bg-white border border-border-subtle shadow-subtle space-y-3">
+            <div className="w-8 h-8 rounded-full bg-pastel-mint text-text-primary font-bold text-xs flex items-center justify-center">
+              1
+            </div>
+            <h4 className="font-semibold text-base text-text-primary">Isolated Workspace</h4>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Create unlimited isolated ledgers (e.g. Maaz Technologies INR or Horizon FinTech GBP). No cross-company contamination.
             </p>
           </div>
-          <div className="space-y-1">
-            <span className="font-mono font-bold text-text-primary block">Deterministic Math Engine</span>
-            <p className="text-text-secondary">
-              All invoice tolerances, amortizations, and FX differences use pure Python algorithms, not generative guesses.
+
+          <div className="p-6 rounded-3xl bg-white border border-border-subtle shadow-subtle space-y-3">
+            <div className="w-8 h-8 rounded-full bg-pastel-aqua text-text-primary font-bold text-xs flex items-center justify-center">
+              2
+            </div>
+            <h4 className="font-semibold text-base text-text-primary">Smart Ingestion</h4>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Upload multi-sheet Excel or CSV. Automatic column aliasing maps messy headers and preserves native currencies (₹, $, €, £, CHF).
             </p>
           </div>
-          <div className="space-y-1">
-            <span className="font-mono font-bold text-text-primary block">1-Click JSON Audit Export</span>
-            <p className="text-text-secondary">
-              Download the entire month-end reconciliation packet formatted directly for external audit review.
+
+          <div className="p-6 rounded-3xl bg-white border border-border-subtle shadow-subtle space-y-3">
+            <div className="w-8 h-8 rounded-full bg-pastel-pink text-text-primary font-bold text-xs flex items-center justify-center">
+              3
+            </div>
+            <h4 className="font-semibold text-base text-text-primary">Reconcile & Verify</h4>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Deterministic 3-way matching executes. Material exceptions queue for controller sign-off with multi-agent evidence.
             </p>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-white border border-border-subtle shadow-subtle space-y-3">
+            <div className="w-8 h-8 rounded-full bg-pastel-lime text-text-primary font-bold text-xs flex items-center justify-center">
+              4
+            </div>
+            <h4 className="font-semibold text-base text-text-primary">Close & 8 Reports</h4>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Seal the financial period. Generate official Close Summaries, Reconciliation, Audit Trail, and Verifier reports in CSV/JSON.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 8. INTEGRATIONS BANNER (Section 31 & Reference 1) */}
+      <section id="integrations" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="rounded-3xl p-8 sm:p-14 bg-gradient-banner text-white shadow-card text-center space-y-6">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur-sm">
+            <span>Connectors & File Ingestion</span>
+          </div>
+
+          <h2 className="font-serif text-3xl sm:text-5xl font-normal max-w-2xl mx-auto leading-tight">
+            Connect your finance stack. Reconcile with proof.
+          </h2>
+
+          <p className="text-xs sm:text-base text-white/80 max-w-xl mx-auto leading-relaxed">
+            Connect ERPs, banking feeds, and data warehouses, or import standard CSV and Excel sheets directly inside your isolated workspace.
+          </p>
+
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+            {["SAP", "Oracle", "NetSuite", "QuickBooks", "Snowflake", "PostgreSQL", "CSV/XLSX", "Stripe"].map((tool) => (
+              <span key={tool} className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-medium backdrop-blur-sm">
+                {tool}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 9. FINAL CALL TO ACTION */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 text-center max-w-3xl mx-auto border-t border-border-subtle">
-        <h2 className="font-serif text-4xl sm:text-5xl text-text-primary font-normal">
-          Close your books with mathematical proof.
-        </h2>
-        <p className="mt-4 text-text-secondary text-sm sm:text-base max-w-xl mx-auto">
-          Experience the autonomous finance control system designed for controllers, verified for auditors, and built for trustworthy autonomy.
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
-            onClick={onLaunchCommandCenter}
-            className="w-full sm:w-auto px-8 py-3 rounded-md bg-accent text-white font-semibold text-sm hover:bg-accent-hover active:scale-[0.98] transition-all shadow-subtle"
-          >
-            Launch Command Center
-          </button>
-          <button
-            onClick={onStartGuidedTour}
-            className="w-full sm:w-auto px-6 py-3 rounded-md bg-white text-text-primary border border-border-subtle font-medium text-sm hover:bg-bg-subtle active:scale-[0.98] transition-all"
-          >
-            Run Guided Tour
-          </button>
-        </div>
-      </section>
-
-      {/* 10. EDITORIAL MARKETING FOOTER */}
-      <footer className="bg-[#FAF9F6] border-t border-border-subtle pt-16 pb-12 text-text-secondary text-xs mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-10 pb-12 border-b border-border-subtle/80">
-            {/* Col 1: Brand & Mission */}
-            <div className="md:col-span-2 space-y-4">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center shrink-0">
-                  <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-                    <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" strokeWidth="3.5" strokeLinecap="round"/>
-                    <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <span className="font-serif text-lg font-semibold text-text-primary">LedgerProof</span>
-              </div>
-              <p className="text-xs text-text-secondary leading-relaxed max-w-sm">
-                The Autonomous Finance Control Layer for enterprise close, reconciliation, and audit evidence. Finance agents should prove their work.
-              </p>
-              <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] font-mono text-accent">
-                <span className="px-2 py-0.5 rounded bg-accent-light/60 border border-accent/20">Track 2: Autonomous Office of the CFO</span>
-                <span className="text-text-muted">&bull;</span>
-                <span className="text-text-secondary">Built with Agent Orchestrator (AO)</span>
-              </div>
+      {/* 9. FINAL CTA SECTION (Section 32 & Reference 1) */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="rounded-3xl p-8 sm:p-16 bg-gradient-mint-cyan border border-pastel-mintBorder text-center space-y-6 shadow-card">
+          
+          <div className="bg-white rounded-2xl p-8 sm:p-12 max-w-2xl mx-auto shadow-modal border border-border-subtle/80 space-y-6">
+            
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-pastel-mint text-text-primary text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Offline-First &bull; 100% Local Intelligence</span>
             </div>
 
-            {/* Col 2: Control Layer */}
-            <div className="space-y-3">
-              <span className="font-semibold text-text-primary uppercase tracking-wider text-[11px] block">Control Layer</span>
-              <ul className="space-y-2 text-xs">
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Close Command Center</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">3-Way Reconciliation</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Independent Verifier</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Controller Review Queue</button></li>
-              </ul>
-            </div>
+            <h2 className="font-serif text-3xl sm:text-4xl font-normal text-text-primary leading-tight">
+              Finance automation without blind trust.
+            </h2>
 
-            {/* Col 3: Governance */}
-            <div className="space-y-3">
-              <span className="font-semibold text-text-primary uppercase tracking-wider text-[11px] block">Governance & Audit</span>
-              <ul className="space-y-2 text-xs">
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Cryptographic Audit Vault</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Deterministic Policy Bounds</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Double-Entry Invariants</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Multi-Currency Money Engine</button></li>
-              </ul>
-            </div>
+            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+              Experience the autonomous finance control layer built for enterprise controllers, internal audit teams, and the modern Office of the CFO.
+            </p>
 
-            {/* Col 4: Intelligence */}
-            <div className="space-y-3">
-              <span className="font-semibold text-text-primary uppercase tracking-wider text-[11px] block">Intelligence</span>
-              <ul className="space-y-2 text-xs">
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Agent Lab Playground</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Ground-Truth Evaluations</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Multi-Signal Duplicate Engine</button></li>
-                <li><button onClick={onLaunchCommandCenter} className="hover:text-text-primary transition-colors text-left">Try Your Data (XLSX/CSV)</button></li>
-              </ul>
-            </div>
-          </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={onLaunchCommandCenter}
+                className="inline-flex items-center space-x-2 px-7 py-3 rounded-full bg-[#0E332E] text-white text-sm font-semibold hover:bg-bg-darkHover active:scale-[0.98] transition-all shadow-subtle"
+              >
+                <span>Open Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
 
-          {/* Bottom Bar */}
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-[11px] text-text-muted">
-            <div>
-              &copy; 2026 LedgerProof Technologies. Developed under Agent Orchestrator (AO) lifecycle.
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <span>Offline-First (Zero Paid API Required)</span>
-              <span>&bull;</span>
-              <span>100% Light Mode Editorial</span>
-              <span>&bull;</span>
-              <button onClick={onStartGuidedTour} className="text-accent hover:underline font-medium">
-                Start Guided Tour
+              <button
+                onClick={onStartGuidedTour}
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-pastel-mint text-text-primary border border-pastel-mintBorder text-sm font-semibold hover:bg-pastel-mint/80 transition-all shadow-subtle"
+              >
+                <Compass className="w-4 h-4 text-emerald-700" />
+                <span>Take a Tour</span>
               </button>
             </div>
+
           </div>
+
+        </div>
+      </section>
+
+      {/* 10. SUBSTANTIAL ENTERPRISE FOOTER (Section 33 & Reference 1) */}
+      <footer className="bg-white border-t border-border-subtle py-14 px-4 sm:px-8 text-xs text-text-secondary mt-auto">
+        <div className="max-w-7xl mx-auto space-y-10">
+          
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            
+            <div className="space-y-3">
+              <div className="font-semibold text-text-primary text-xs uppercase tracking-wider">
+                Product
+              </div>
+              <ul className="space-y-2 text-text-muted">
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">Overview</a></li>
+                <li><a href="#workflow" className="hover:text-text-primary transition-colors">Real Data Pipeline</a></li>
+                <li><a href="#control-plane" className="hover:text-text-primary transition-colors">Agent Lab</a></li>
+                <li><a href="#adversarial" className="hover:text-text-primary transition-colors">Independent Verifier</a></li>
+                <li><a href="#reports" className="hover:text-text-primary transition-colors">8 Close Reports</a></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <div className="font-semibold text-text-primary text-xs uppercase tracking-wider">
+                Platform
+              </div>
+              <ul className="space-y-2 text-text-muted">
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">Architecture</a></li>
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">Zero Self-Approval</a></li>
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">Decimal-Safe Money</a></li>
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">SHA-256 Audit Vault</a></li>
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">Local Intelligence</a></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <div className="font-semibold text-text-primary text-xs uppercase tracking-wider">
+                Resources
+              </div>
+              <ul className="space-y-2 text-text-muted">
+                <li><a href="https://github.com/Untrivial-ai/agent-orchestrator" target="_blank" rel="noreferrer" className="hover:text-text-primary transition-colors">AO GitHub Docs</a></li>
+                <li><a href="/sample-data/transactions.csv" download className="hover:text-text-primary transition-colors">Sample Data CSV</a></li>
+                <li><a href="#evaluations" className="hover:text-text-primary transition-colors">40 Benchmark Cases</a></li>
+                <li><a href="#capabilities" className="hover:text-text-primary transition-colors">Neatlogs Telemetry</a></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <div className="font-semibold text-text-primary text-xs uppercase tracking-wider">
+                Project
+              </div>
+              <ul className="space-y-2 text-text-muted">
+                <li><span>Track 2: Autonomous Office of the CFO</span></li>
+                <li><span>Local Intelligence Runtime</span></li>
+                <li><span>Zero Paid API Requirement</span></li>
+                <li><span>Evaluations: V1 (72%) &rarr; V2.4 (96%)</span></li>
+              </ul>
+            </div>
+
+          </div>
+
+          <div className="pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-text-muted">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded bg-[#0E332E] p-0.5 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+                  <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="font-semibold text-text-primary">LedgerProof</span>
+              <span>&bull;</span>
+              <span>Autonomous Finance Control Layer</span>
+            </div>
+            <div>
+              &copy; 2026 LedgerProof. Local sovereign financial control. All rights reserved.
+            </div>
+          </div>
+
         </div>
       </footer>
 

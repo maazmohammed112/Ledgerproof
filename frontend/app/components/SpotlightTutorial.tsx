@@ -16,6 +16,7 @@ export interface TutorialStep {
 interface SpotlightTutorialProps {
   isOpen: boolean;
   onClose: () => void;
+  onComplete?: () => void;
   onNavigateToTab?: (tabId: string) => void;
   onResetDemo?: () => void;
   onRunClose?: () => void;
@@ -24,6 +25,7 @@ interface SpotlightTutorialProps {
 export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
   isOpen,
   onClose,
+  onComplete,
   onNavigateToTab,
   onResetDemo,
   onRunClose,
@@ -141,7 +143,11 @@ export const SpotlightTutorial: React.FC<SpotlightTutorialProps> = ({
     try {
       localStorage.setItem('ledgerproof_tutorial_completed_v2', 'true');
     } catch (e) {}
-    onClose();
+    if (onComplete) {
+      onComplete();
+    } else {
+      onClose();
+    }
   };
 
   // Keyboard navigation for tutorial

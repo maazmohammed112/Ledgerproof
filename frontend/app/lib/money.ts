@@ -95,59 +95,143 @@ export function normalizeCurrency(
   };
 }
 
+export interface CurrencyDetectionContext {
+  explicitCurrencyColValue?: string;
+  workspaceCountry?: string;
+  workspaceReportingCurrency?: SupportedCurrency;
+}
+
 /**
- * Intelligent currency detector from raw string, cell formats, symbols, or headers
+ * Decimal-safe arithmetic operations to avoid floating point anomalies (e.g. 0.1 + 0.2 = 0.30000000000000004)
  */
-export function detectCurrency(input: string | number, fallback: SupportedCurrency = 'USD'): {
+export function decimalAdd(a: number, b: number, decimals: number = 2): number {
+  const factor = Math.pow(10, decimals);
+  return Math.round((Math.round(a * factor) + Math.round(b * factor))) / factor;
+}
+
+export function decimalSub(a: number, b: number, decimals: number = 2): number {
+  const factor = Math.pow(10, decimals);
+  return Math.round((Math.round(a * factor) - Math.round(b * factor))) / factor;
+}
+
+export function decimalMul(a: number, b: number, decimals: number = 2): number {
+  const factor = Math.pow(10, decimals);
+  return Math.round(a * b * factor) / factor;
+}
+
+export function decimalDiv(a: number, b: number, decimals: number = 2): number {
+  if (b === 0) return 0;
+  const factor = Math.pow(10, decimals);
+  return Math.round((a / b) * factor) / factor;
+}
+
+/**
+ * Intelligent currency detector adhering strictly to priority:
+ * 1. Explicit row currency column
+ * 2. Explicit Excel cell currency format / text
+ * 3. Currency ISO code
+ * 4. Currency symbol
+ * 5. Ambiguous $ resolution via workspace country / reporting currency
+ * 6. Workspace reporting currency fallback (Never force USD globally)
+ */
+export function detectCurrency(
+  input: string | number, 
+  contextOrFallback: SupportedCurrency | CurrencyDetectionContext = 'USD'
+): {
   currency: SupportedCurrency;
   cleanedAmount: number;
   confidence: number;
+  requiresConfirmation?: boolean;
 } {
+  const context: CurrencyDetectionContext = typeof contextOrFallback === 'string'
+    ? { workspaceReportingCurrency: contextOrFallback }
+    : (contextOrFallback || {});
+
+  const fallback = context.workspaceReportingCurrency || 'USD';
+
+  // Priority 1: Explicit row currency column value
+  if (context.explicitCurrencyColValue) {
+    const explicitStr = String(context.explicitCurrencyColValue).trim().toUpperCase();
+    for (const code of Object.keys(CURRENCY_REGISTRY) as SupportedCurrency[]) {
+      if (explicitStr === code || explicitStr.includes(code)) {
+        const cleaned = typeof input === 'number' ? input : parseFloat(String(input).replace(/[^0-9.-]/g, '')) || 0;
+        return { currency: code, cleanedAmount: cleaned, confidence: 1.0 };
+      }
+    }
+    if (explicitStr.includes('₹') || explicitStr.includes('RS')) {
+      const cleaned = typeof input === 'number' ? input : parseFloat(String(input).replace(/[^0-9.-]/g, '')) || 0;
+      return { currency: 'INR', cleanedAmount: cleaned, confidence: 1.0 };
+    }
+  }
+
   if (typeof input === 'number') {
-    return { currency: fallback, cleanedAmount: input, confidence: 0.5 };
+    return { currency: fallback, cleanedAmount: input, confidence: 0.7 };
   }
 
   const str = String(input).trim();
   let detected: SupportedCurrency = fallback;
   let confidence = 0.5;
+  let requiresConfirmation = false;
 
-  // 1. Check explicit currency tokens
-  if (/\bINR\b/i.test(str) || str.includes('₹') || /Rs\.?/i.test(str)) {
+  // Priority 2 & 3: Explicit currency tokens / ISO codes / symbols
+  if (/\bINR\b/i.test(str) || str.includes('₹') || /Rs\.?/i.test(str) || /Rupees?/i.test(str)) {
     detected = 'INR';
-    confidence = 0.98;
+    confidence = 0.99;
   } else if (/\bEUR\b/i.test(str) || str.includes('€')) {
     detected = 'EUR';
-    confidence = 0.98;
+    confidence = 0.99;
   } else if (/\bGBP\b/i.test(str) || str.includes('£')) {
     detected = 'GBP';
-    confidence = 0.98;
+    confidence = 0.99;
   } else if (/\bCHF\b/i.test(str)) {
     detected = 'CHF';
-    confidence = 0.98;
+    confidence = 0.99;
   } else if (/\bJPY\b/i.test(str) || str.includes('¥')) {
     detected = 'JPY';
-    confidence = 0.98;
-  } else if (/\bCAD\b/i.test(str) || /C\$/i.test(str)) {
+    confidence = 0.99;
+  } else if (/\bCAD\b/i.test(str) || /C\$/i.test(str) || /CA\$/i.test(str)) {
     detected = 'CAD';
-    confidence = 0.95;
-  } else if (/\bAUD\b/i.test(str) || /A\$/i.test(str)) {
+    confidence = 0.98;
+  } else if (/\bAUD\b/i.test(str) || /A\$/i.test(str) || /AU\$/i.test(str)) {
     detected = 'AUD';
-    confidence = 0.95;
-  } else if (/\bSGD\b/i.test(str) || /S\$/i.test(str)) {
+    confidence = 0.98;
+  } else if (/\bSGD\b/i.test(str) || /S\$/i.test(str) || /SG\$/i.test(str)) {
     detected = 'SGD';
-    confidence = 0.95;
-  } else if (/\bAED\b/i.test(str) || /Dhs/i.test(str)) {
+    confidence = 0.98;
+  } else if (/\bAED\b/i.test(str) || /Dhs/i.test(str) || /Dirhams?/i.test(str)) {
     detected = 'AED';
-    confidence = 0.95;
+    confidence = 0.98;
   } else if (str.includes('$')) {
-    detected = 'USD';
-    confidence = 0.90;
+    // Priority 5: Ambiguous $ resolution
+    const country = (context.workspaceCountry || '').toLowerCase();
+    const repCurr = context.workspaceReportingCurrency;
+
+    if (country.includes('canada') || repCurr === 'CAD') {
+      detected = 'CAD';
+      confidence = 0.92;
+    } else if (country.includes('australia') || repCurr === 'AUD') {
+      detected = 'AUD';
+      confidence = 0.92;
+    } else if (country.includes('singapore') || repCurr === 'SGD') {
+      detected = 'SGD';
+      confidence = 0.92;
+    } else if (country.includes('united states') || country.includes('usa') || country.includes('us') || repCurr === 'USD') {
+      detected = 'USD';
+      confidence = 0.95;
+    } else {
+      // Ambiguous symbol without definitive country match
+      detected = repCurr && ['USD', 'CAD', 'AUD', 'SGD'].includes(repCurr) ? repCurr : 'USD';
+      requiresConfirmation = true;
+      confidence = 0.70;
+    }
+  } else {
+    // Priority 6: No currency tokens found - fallback strictly to workspace reporting currency
+    detected = fallback;
+    confidence = 0.80;
   }
 
-  // 2. Parse clean numeric value
-  // Remove currency signs, letters, and handle comma/dot separation
+  // Parse clean numeric value
   let numStr = str.replace(/[^0-9.-]/g, '');
-  // Handle Indian Lakh/Crore words if present in text
   let multiplier = 1;
   if (/(\d+(?:\.\d+)?)\s*(?:lakh|lac|l)\b/i.test(str)) {
     const match = str.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lac|l)\b/i);
@@ -170,6 +254,7 @@ export function detectCurrency(input: string | number, fallback: SupportedCurren
     currency: detected,
     cleanedAmount: finalAmount,
     confidence,
+    requiresConfirmation,
   };
 }
 

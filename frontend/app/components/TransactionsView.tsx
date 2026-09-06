@@ -33,7 +33,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   onOpenDecisionTrace,
   onOpenReviewModal,
 }) => {
-  const settings = store.getSettings();
+  const activeWs = store.getActiveWorkspace();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [currencyFilter, setCurrencyFilter] = useState<string>('ALL');
@@ -106,6 +106,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     e.preventDefault();
     const newTx: Transaction = {
       id: `TX-USR-${Date.now().toString().slice(-4)}`,
+      workspaceId: activeWs.id,
       date: new Date().toISOString().split('T')[0],
       vendor: formVendor || 'New Vendor',
       description: formDesc || 'User created ledger entry',
@@ -248,7 +249,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <th className="py-3 px-4">GL Account</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Original Amount</th>
-                <th className="py-3 px-4 text-right">Reporting (USD)</th>
+                <th className="py-3 px-4 text-right">Reporting ({activeWs.reportingCurrency || 'USD'})</th>
                 <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -285,14 +286,14 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right font-tabular whitespace-nowrap text-text-secondary">
-                    {tx.currency_original && tx.currency_original !== 'USD' ? (
-                      formatMoney(tx.amount_original || tx.amount, tx.currency_original, settings.locale)
+                    {tx.currency_original && tx.currency_original !== (activeWs.reportingCurrency || 'USD') ? (
+                      formatMoney(tx.amount_original || tx.amount, tx.currency_original, activeWs.locale)
                     ) : (
                       '—'
                     )}
                   </td>
                   <td className="py-3 px-4 text-right font-tabular whitespace-nowrap font-semibold text-text-primary">
-                    {formatMoney(tx.amount, 'USD', settings.locale)}
+                    {formatMoney(tx.amount, tx.currency || activeWs.reportingCurrency || 'USD', activeWs.locale)}
                   </td>
                   <td className="py-3 px-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center space-x-1.5">

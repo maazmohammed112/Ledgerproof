@@ -7,17 +7,25 @@ import { TopHeader } from '../components/TopHeader';
 import { SettingsModal } from '../components/SettingsModal';
 import { HelpModal } from '../components/HelpModal';
 import { CommandCenterView } from '../components/CommandCenterView';
+import { ControlPlaneView } from '../components/ControlPlaneView';
+import { DataSourcesView } from '../components/DataSourcesView';
+import { TransactionsView } from '../components/TransactionsView';
+import { ReconciliationView } from '../components/ReconciliationView';
 import { ExceptionInboxView } from '../components/ExceptionInboxView';
 import { DecisionTraceModal } from '../components/DecisionTraceModal';
 import { HumanReviewModal } from '../components/HumanReviewModal';
 import { AgentLabView } from '../components/AgentLabView';
 import { EvaluationLabView } from '../components/EvaluationLabView';
 import { PolicyCenterView } from '../components/PolicyCenterView';
-import { TryYourDataView } from '../components/TryYourDataView';
 import { AuditVaultView } from '../components/AuditVaultView';
+import { ReportsView } from '../components/ReportsView';
 import { ArchitectureView } from '../components/ArchitectureView';
+import { ObservabilityView } from '../components/ObservabilityView';
+import { TryYourDataView } from '../components/TryYourDataView';
 import { BuiltWithAoView } from '../components/BuiltWithAoView';
 import { SpotlightTutorial } from '../components/SpotlightTutorial';
+import { WorkspaceModal } from '../components/WorkspaceModal';
+import { LandingPageView } from '../components/LandingPageView';
 
 import { Transaction, DecisionTrace } from '../lib/types';
 import { store } from '../lib/store';
@@ -37,6 +45,7 @@ function DashboardContent() {
   const [isGuidedDemoOpen, setIsGuidedDemoOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isRunningClose, setIsRunningClose] = useState(false);
@@ -67,24 +76,11 @@ function DashboardContent() {
       setTransactions([...store.getTransactions()]);
     });
 
-    // Check if first-time user for tutorial
-    try {
-      const tourDone = localStorage.getItem('ledgerproof_tutorial_completed_v2');
-      if (!tourDone && !shouldOpenTour) {
-        setIsGuidedDemoOpen(true);
-      }
-    } catch (e) {}
-
     return () => unsubscribe();
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if (tab === 'landing') {
-      router.push('/');
-      return;
-    }
     setCurrentTab(tab);
-    // Keep URL parameter aligned without full reload
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
     window.history.replaceState({}, '', url.toString());
@@ -96,16 +92,24 @@ function DashboardContent() {
   };
 
   const handleSwitchDataMode = (mode: 'demo' | 'real') => {
-    store.setDataMode(mode);
-    setDataMode(mode);
-    setTransactions([...store.getTransactions()]);
-    setActiveTrace(null);
-    setActiveTraceTx(null);
-    setReviewTx(null);
     if (mode === 'real') {
-      showToast("Switched to Real Data Workspace. Pre-loaded demo records cleared. Ready for your own data.");
+      const active = store.getActiveWorkspace();
+      if (active.isDemo) {
+        setIsWorkspaceModalOpen(true);
+      } else {
+        store.setDataMode('real');
+        setDataMode('real');
+        setTransactions([...store.getTransactions()]);
+        showToast("Switched to Real Data Workspace.");
+      }
     } else {
-      showToast("Restored Northstar Labs demo dataset with multi-currency records and verified traces.");
+      store.setDataMode('demo');
+      setDataMode('demo');
+      setTransactions([...store.getTransactions()]);
+      setActiveTrace(null);
+      setActiveTraceTx(null);
+      setReviewTx(null);
+      showToast("Restored Northstar Labs demo dataset.");
     }
   };
 
@@ -115,7 +119,7 @@ function DashboardContent() {
     setActiveTrace(null);
     setActiveTraceTx(null);
     setReviewTx(null);
-    showToast("Northstar Labs demo environment restored to pristine initial state.");
+    showToast("Demo environment restored to initial state.");
   };
 
   const handleRunClose = () => {
@@ -125,7 +129,7 @@ function DashboardContent() {
       setIsRunningClose(false);
       setTransactions([...store.getTransactions()]);
       showToast("Close run completed. All eligible transactions reconciled and verified.");
-    }, 1400);
+    }, 1200);
   };
 
   const handleOpenDecisionTrace = (txId: string) => {
@@ -141,20 +145,35 @@ function DashboardContent() {
     notes: string,
     editedGl?: string
   ) => {
-    const newStatus = action === 'REJECT' ? 'BLOCKED' : action === 'REQUEST_EVIDENCE' ? 'HUMAN_REVIEW_REQUIRED' : 'RESOLVED';
-    store.updateTransaction(txId, {
-      status: newStatus,
-      notes: `Controller Sign-Off: ${action} — ${notes}`,
-      gl_account: editedGl || store.getTransaction(txId)?.gl_account || '6000',
-    });
+    store.processHumanDecision(txId, action, notes, editedGl);
     setTransactions([...store.getTransactions()]);
     showToast(`Exception ${txId} updated: ${action} committed.`);
-
-    const remaining = store.getTransactions().filter(t => t.risk_tier === 'TIER_C' && t.status !== 'RESOLVED' && t.status !== 'MANUALLY_APPROVED');
-    if (remaining.length === 0) {
-      showToast("All material exceptions resolved. Close period ready for final sign-off.");
-    }
   };
+
+  const handleLogout = () => {
+    // Return cleanly to landing page
+    setCurrentTab('landing');
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'landing');
+    window.history.replaceState({}, '', url.toString());
+  };
+
+  // If user navigated to landing page view
+  if (currentTab === 'landing') {
+    return (
+      <LandingPageView
+        onLaunchCommandCenter={() => handleTabChange('command-center')}
+        onOpenDecisionTrace={(txId) => {
+          handleTabChange('decision-trace');
+          handleOpenDecisionTrace(txId);
+        }}
+        onStartGuidedTour={() => {
+          handleTabChange('command-center');
+          setIsGuidedDemoOpen(true);
+        }}
+      />
+    );
+  }
 
   const openExceptionCount = transactions.filter(
     (t) => t.category !== undefined && t.status !== 'RESOLVED' && t.status !== 'MANUALLY_APPROVED'
@@ -162,7 +181,8 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen flex bg-bg-primary text-text-primary antialiased">
-      {/* 1. Left Sidebar Navigation */}
+      
+      {/* 1. Left Sidebar Navigation (Matching Reference 5) */}
       <Sidebar
         currentTab={currentTab}
         setCurrentTab={handleTabChange}
@@ -170,6 +190,8 @@ function DashboardContent() {
         onStartGuidedDemo={() => setIsGuidedDemoOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
+        onLogout={handleLogout}
         exceptionCount={openExceptionCount}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
@@ -180,7 +202,7 @@ function DashboardContent() {
       {/* 2. Main Dashboard Application Shell */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Header */}
+        {/* Top Header (Matching Reference 5) */}
         <TopHeader
           currentTab={currentTab}
           setCurrentTab={handleTabChange}
@@ -190,6 +212,8 @@ function DashboardContent() {
           onStartGuidedDemo={() => setIsGuidedDemoOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenHelp={() => setIsHelpOpen(true)}
+          onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
+          onLogout={handleLogout}
           isRunningClose={isRunningClose}
           transactions={transactions}
           onOpenDecisionTrace={handleOpenDecisionTrace}
@@ -197,7 +221,15 @@ function DashboardContent() {
           onSwitchDataMode={handleSwitchDataMode}
         />
 
-        {/* Main Content Area */}
+        {/* Toast Notification Banner */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-[#0E332E] text-white px-4 py-2.5 rounded-2xl shadow-modal text-xs font-semibold flex items-center space-x-2 animate-fade-in">
+            <span className="w-2 h-2 rounded-full bg-pastel-mint" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* Main Content Canvas */}
         <main className="flex-1 min-w-0">
 
           {currentTab === 'command-center' && (
@@ -208,6 +240,41 @@ function DashboardContent() {
               onNavigateToExceptions={(filter) => handleTabChange('exceptions')}
               onOpenDecisionTrace={handleOpenDecisionTrace}
               onOpenReviewModal={(tx) => setReviewTx(tx)}
+              onOpenDataSources={() => handleTabChange('data-sources')}
+            />
+          )}
+
+          {currentTab === 'control-plane' && (
+            <ControlPlaneView
+              onRunClose={handleRunClose}
+              isRunningClose={isRunningClose}
+              onNavigateToExceptions={() => handleTabChange('exceptions')}
+              onNavigateToHumanReview={() => handleTabChange('exceptions')}
+            />
+          )}
+
+          {currentTab === 'data-sources' && (
+            <DataSourcesView
+              onImportComplete={() => {
+                setTransactions([...store.getTransactions()]);
+                showToast("File imported into workspace ledger.");
+              }}
+              onRunClose={handleRunClose}
+            />
+          )}
+
+          {currentTab === 'transactions' && (
+            <TransactionsView
+              transactions={transactions}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+              onOpenReviewModal={(tx) => setReviewTx(tx)}
+            />
+          )}
+
+          {currentTab === 'reconciliation' && (
+            <ReconciliationView
+              transactions={transactions}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
             />
           )}
 
@@ -222,7 +289,7 @@ function DashboardContent() {
           {currentTab === 'decision-trace' && (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
               <div className="text-center py-4 space-y-1">
-                <span className="text-xs font-semibold text-accent uppercase tracking-widest">Inspection Cockpit</span>
+                <span className="text-xs font-semibold text-emerald-800 uppercase tracking-widest">Inspection Cockpit</span>
                 <h1 className="font-serif text-3xl sm:text-4xl text-text-primary">Autonomous Decision Trace</h1>
                 <p className="text-xs text-text-secondary max-w-xl mx-auto">
                   Select an exception below to inspect its multi-agent telemetry, evidence chips, and Independent Verifier determination.
@@ -234,16 +301,16 @@ function DashboardContent() {
                   <div
                     key={tx.id}
                     onClick={() => handleOpenDecisionTrace(tx.id)}
-                    className="bg-bg-card p-5 rounded-xl border border-border-subtle shadow-subtle hover:border-text-secondary/30 cursor-pointer transition-all space-y-2 hover:shadow-card"
+                    className="bg-white p-5 rounded-2xl border border-border-subtle shadow-subtle hover:border-text-secondary/40 cursor-pointer transition-all space-y-2 hover:shadow-card"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-mono text-text-muted font-semibold">{tx.id}</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         tx.risk_tier === 'TIER_D' 
-                          ? 'bg-status-blockedBg text-status-blocked border border-status-blockedBorder' 
-                          : 'bg-status-reviewBg text-status-review border border-status-reviewBorder'
+                          ? 'bg-pastel-pink text-status-blocked border border-pastel-pinkBorder' 
+                          : 'bg-pastel-lime text-amber-800 border border-pastel-limeBorder'
                       }`}>
-                        {tx.risk_tier}
+                        {tx.risk_tier || 'TIER_C'}
                       </span>
                     </div>
                     <h3 className="font-medium text-base text-text-primary">{tx.vendor}</h3>
@@ -252,7 +319,7 @@ function DashboardContent() {
                       <span className="font-semibold text-text-primary">
                         ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </span>
-                      <span className="text-accent font-semibold text-[11px] hover:underline">Inspect Telemetry &rarr;</span>
+                      <span className="text-emerald-800 font-semibold text-[11px] hover:underline">Inspect Telemetry &rarr;</span>
                     </div>
                   </div>
                 ))}
@@ -266,6 +333,23 @@ function DashboardContent() {
 
           {currentTab === 'policies' && <PolicyCenterView />}
 
+          {currentTab === 'audit-vault' && (
+            <AuditVaultView
+              transactions={transactions}
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+            />
+          )}
+
+          {currentTab === 'reports' && (
+            <ReportsView
+              onOpenDecisionTrace={handleOpenDecisionTrace}
+            />
+          )}
+
+          {currentTab === 'architecture' && <ArchitectureView />}
+
+          {currentTab === 'observability' && <ObservabilityView />}
+
           {currentTab === 'try-data' && (
             <TryYourDataView
               onAnalyzeSuccess={() => {
@@ -276,47 +360,30 @@ function DashboardContent() {
             />
           )}
 
-          {currentTab === 'audit-vault' && (
-            <AuditVaultView
-              transactions={transactions}
-              onOpenDecisionTrace={handleOpenDecisionTrace}
-            />
-          )}
-
-          {currentTab === 'architecture' && <ArchitectureView />}
-
           {currentTab === 'built-with-ao' && <BuiltWithAoView />}
         </main>
 
         {/* Dashboard Status Utility Footer */}
-        <footer className="bg-bg-secondary border-t border-border-subtle py-2.5 px-4 sm:px-6 text-xs text-text-muted mt-auto">
+        <footer className="bg-white border-t border-border-subtle py-3 px-4 sm:px-6 text-xs text-text-muted mt-auto">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left text-[11px]">
             <div className="flex items-center space-x-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-status-verified shrink-0" />
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
               <span className="font-mono text-text-primary font-medium">Consensus: Active</span>
               <span className="text-text-muted">&bull;</span>
               <span>SHA-256 Vault Synced</span>
               <span className="text-text-muted">&bull;</span>
-              <span className="text-text-secondary">Northstar Labs (US-GAAP)</span>
+              <span className="text-text-secondary">{store.getActiveWorkspace().name} ({store.getActiveWorkspace().reportingCurrency})</span>
             </div>
             <div className="flex items-center space-x-3 text-text-muted">
               <span>Latency: <strong className="text-text-primary font-mono font-medium">14.2ms</strong></span>
               <span>&bull;</span>
-              <span>Runtime: <strong className="text-accent font-medium">Local Intelligence</strong></span>
+              <span>Runtime: <strong className="text-emerald-800 font-medium">Local Intelligence</strong></span>
               <span>&bull;</span>
               <button 
-                id="tour-audit-vault-link"
                 onClick={() => handleTabChange('audit-vault')} 
-                className="hover:text-text-primary transition-colors text-text-secondary font-medium text-accent"
+                className="hover:text-text-primary transition-colors text-emerald-800 font-semibold"
               >
                 Audit Vault (SHA-256)
-              </button>
-              <span>&bull;</span>
-              <button 
-                onClick={() => setIsHelpOpen(true)} 
-                className="hover:text-text-primary transition-colors text-text-secondary"
-              >
-                Docs & Guide
               </button>
               <span>&bull;</span>
               <button 
@@ -348,39 +415,55 @@ function DashboardContent() {
         <HumanReviewModal
           transaction={reviewTx}
           onClose={() => setReviewTx(null)}
-          onSubmitReview={handleReviewAction}
+          onDecision={handleReviewAction}
+          onOpenDecisionTrace={(txId) => {
+            setReviewTx(null);
+            handleOpenDecisionTrace(txId);
+          }}
         />
       )}
 
-      {/* Spotlight Interactive Element Walkthrough */}
+      {/* Workspace Management Modal */}
+      <WorkspaceModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => setIsWorkspaceModalOpen(false)}
+        onSelectWorkspace={(wsId) => {
+          store.setActiveWorkspace(wsId);
+          setTransactions([...store.getTransactions()]);
+          setIsWorkspaceModalOpen(false);
+          showToast(`Switched to workspace.`);
+        }}
+        onCreateSuccess={(newWs) => {
+          setTransactions([...store.getTransactions()]);
+          setIsWorkspaceModalOpen(false);
+          showToast(`Provisioned workspace: ${newWs.name}`);
+        }}
+      />
+
+      {/* Guided Walkthrough Tour */}
       <SpotlightTutorial
         isOpen={isGuidedDemoOpen}
         onClose={() => setIsGuidedDemoOpen(false)}
-        onNavigateToTab={(tab) => handleTabChange(tab)}
-        onRunClose={handleRunClose}
-        onResetDemo={handleResetDemo}
+        onComplete={() => {
+          setIsGuidedDemoOpen(false);
+          try {
+            localStorage.setItem('ledgerproof_tutorial_completed_v2', 'true');
+          } catch (e) {}
+          showToast("Tour complete! You're ready to explore autonomous reconciliation.");
+        }}
       />
 
-      {/* System Settings Modal */}
+      {/* Governance Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onSave={(newSettings) => showToast("Controller settings saved successfully.")}
       />
 
-      {/* Documentation & Help Guide Modal */}
+      {/* Help & Documentation Modal */}
       <HelpModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
       />
-
-      {/* Floating Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg bg-text-primary text-white text-xs font-medium shadow-modal animate-fade-in flex items-center space-x-2.5">
-          <span className="w-2 h-2 rounded-full bg-status-verified shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -388,10 +471,10 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="flex items-center space-x-3 text-text-secondary text-sm">
-          <span className="w-3 h-3 rounded-full bg-accent animate-ping" />
-          <span>Loading Autonomous Control Layer...</span>
+      <div className="min-h-screen flex items-center justify-center bg-bg-primary text-text-secondary text-sm font-mono">
+        <div className="space-y-3 text-center">
+          <div className="w-8 h-8 rounded-full border-2 border-border-subtle border-t-[#0E332E] animate-spin mx-auto" />
+          <div>Initializing LedgerProof Control Layer...</div>
         </div>
       </div>
     }>

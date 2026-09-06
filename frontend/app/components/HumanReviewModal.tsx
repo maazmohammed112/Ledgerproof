@@ -9,25 +9,40 @@ import {
   FileText, 
   Edit3, 
   ShieldCheck, 
-  Lock 
+  Lock,
+  ExternalLink,
+  ShieldAlert,
+  HelpCircle,
+  RotateCcw
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
+import { store } from '../lib/store';
+import { formatMoney } from '../lib/money';
 
 interface HumanReviewModalProps {
   transaction: Transaction | null;
   onClose: () => void;
-  onSubmitReview: (
+  onSubmitReview?: (
     txId: string, 
     action: 'APPROVE' | 'REJECT' | 'REQUEST_EVIDENCE' | 'EDIT_RESOLUTION', 
     notes: string, 
     editedGl?: string
   ) => void;
+  onDecision?: (
+    txId: string, 
+    action: 'APPROVE' | 'REJECT' | 'REQUEST_EVIDENCE' | 'EDIT_RESOLUTION', 
+    notes: string, 
+    editedGl?: string
+  ) => void;
+  onOpenDecisionTrace?: (txId: string) => void;
 }
 
 export const HumanReviewModal: React.FC<HumanReviewModalProps> = ({
   transaction,
   onClose,
   onSubmitReview,
+  onDecision,
+  onOpenDecisionTrace,
 }) => {
   // Close on ESC
   useEffect(() => {
@@ -40,25 +55,33 @@ export const HumanReviewModal: React.FC<HumanReviewModalProps> = ({
 
   if (!transaction) return null;
 
+  const activeWs = store.getActiveWorkspace();
+  const materialityCeiling = activeWs.reportingCurrency === 'INR' ? 1000000 : 10000;
+  const currency = transaction.currency || activeWs.reportingCurrency || 'USD';
+  const isMaterial = transaction.amount >= materialityCeiling;
+  const formattedAmount = formatMoney(transaction.amount, currency, activeWs.locale);
+  const formattedCeiling = formatMoney(materialityCeiling, currency, activeWs.locale);
+
   const [notes, setNotes] = useState('');
   const [editedGl, setEditedGl] = useState(transaction.gl_account);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmMaterialApprove, setConfirmMaterialApprove] = useState(false);
-
-  const isMaterial = transaction.amount >= 10000.0;
 
   const handleAction = (action: 'APPROVE' | 'REJECT' | 'REQUEST_EVIDENCE' | 'EDIT_RESOLUTION') => {
     if (action === 'APPROVE' && isMaterial && !confirmMaterialApprove) {
       setConfirmMaterialApprove(true);
       return;
     }
-    onSubmitReview(transaction.id, action, notes || 'Approved by Controller', isEditing ? editedGl : undefined);
+    const callback = onSubmitReview || onDecision;
+    if (callback) {
+      callback(transaction.id, action, notes || 'Approved by Financial Controller', isEditing ? editedGl : undefined);
+    }
     onClose();
   };
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-fade-in select-none"
       onClick={onClose}
     >
       <div 
@@ -67,21 +90,23 @@ export const HumanReviewModal: React.FC<HumanReviewModalProps> = ({
       >
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between bg-bg-card">
+        <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between bg-white">
           <div>
             <div className="flex items-center space-x-2 text-xs">
-              <span className="font-semibold text-status-review uppercase tracking-wider flex items-center">
-                <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Tier C &bull; Controller Sign-Off Required
+              <span className="font-semibold text-[#B45309] uppercase tracking-wider flex items-center bg-pastel-cream px-2.5 py-0.5 rounded-full border border-[#FDE68A]">
+                <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Tier C &bull; Dual Controller Sign-Off Required
               </span>
+              <span className="text-border-medium">&bull;</span>
+              <span className="font-mono text-text-muted text-[11px]">{activeWs.name}</span>
             </div>
-            <h2 className="font-serif text-2xl text-text-primary mt-0.5">
+            <h2 className="font-serif text-2xl text-text-primary mt-1">
               Controller Review: {transaction.vendor}
             </h2>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors"
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors"
             aria-label="Close review modal"
           >
             <X className="w-5 h-5" />
@@ -92,40 +117,52 @@ export const HumanReviewModal: React.FC<HumanReviewModalProps> = ({
         <div className="p-6 space-y-5 text-xs">
 
           {/* Transaction Summary Card */}
-          <div className="p-4 rounded-xl bg-bg-card border border-border-subtle space-y-3">
+          <div className="p-4 rounded-xl bg-white border border-border-subtle space-y-3">
             <div className="flex items-center justify-between font-tabular">
               <span className="font-mono text-text-muted font-semibold">{transaction.id}</span>
-              <span className="font-bold text-xl text-text-primary">
-                ${transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {transaction.currency}
-              </span>
+              <div className="flex items-baseline space-x-1.5">
+                <span className="text-xs text-text-muted">Booking Amount:</span>
+                <span className="font-serif font-bold text-2xl text-text-primary">
+                  {formattedAmount}
+                </span>
+                <span className="font-mono text-xs text-text-muted uppercase">{currency}</span>
+              </div>
             </div>
             
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border-subtle text-text-secondary font-tabular">
-              <div>Issue: <span className="font-semibold text-text-primary">{transaction.category?.replace(/_/g, ' ')}</span></div>
+              <div>Issue Flag: <span className="font-semibold text-text-primary">{transaction.category?.replace(/_/g, ' ') || 'EXCEPTION'}</span></div>
               <div>Booking Date: <span className="font-medium text-text-primary">{transaction.date}</span></div>
             </div>
 
             <p className="text-text-secondary pt-1 leading-relaxed">
-              <span className="font-semibold text-text-primary">Forensic Investigation:</span> {transaction.notes}
+              <span className="font-semibold text-text-primary">Forensic Investigation:</span> {transaction.notes || transaction.description}
             </p>
           </div>
 
-          {/* Materiality Safeguard Warning */}
-          {isMaterial && (
-            <div className="p-3.5 rounded-xl bg-status-reviewBg border border-status-reviewBorder text-status-review flex items-start space-x-2.5">
-              <Lock className="w-4 h-4 text-status-review shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold block">Materiality Safeguard Active</span>
-                <span className="text-text-primary mt-0.5 block leading-relaxed">
-                  Amount exceeds the $10,000.00 materiality ceiling (${transaction.amount.toLocaleString()}). Explicit sign-off notes are permanently hashed to the Audit Vault.
-                </span>
-              </div>
+          {/* Agent Tier Assignment Rationale Callout */}
+          <div className="p-4 rounded-xl bg-pastel-cream border border-[#FDE68A] text-[#92400E] space-y-2">
+            <div className="flex items-center space-x-2">
+              <ShieldAlert className="w-4 h-4 text-[#B45309] shrink-0" />
+              <span className="font-bold text-xs">
+                Why the Agent Escalated this to Tier C (Human Review)
+              </span>
             </div>
-          )}
+            <p className="text-text-primary leading-relaxed text-xs">
+              {isMaterial ? (
+                <>
+                  Under deterministic risk gate <strong>Rule POL-MAT-001</strong>, transactions equal to or exceeding the company materiality threshold of <strong>{formattedCeiling}</strong> cannot be committed autonomously. The Resolution Agent proposed classification, but the Autonomous Gate intercepted the action to require explicit controller authorization.
+                </>
+              ) : (
+                <>
+                  Under deterministic risk gate <strong>Rule POL-VAR-001</strong>, purchase order variance exceeds standard automated tolerance limits. Human judgment is required to verify vendor contractual scope before subledger commitment.
+                </>
+              )}
+            </p>
+          </div>
 
           {/* Optional GL Edit Form */}
           {isEditing && (
-            <div className="p-3.5 rounded-xl bg-bg-card border border-border-subtle space-y-1.5">
+            <div className="p-4 rounded-xl bg-white border border-border-subtle space-y-2">
               <label className="text-xs font-semibold text-text-primary block">
                 Target General Ledger Account
               </label>
@@ -133,33 +170,36 @@ export const HumanReviewModal: React.FC<HumanReviewModalProps> = ({
                 type="text"
                 value={editedGl}
                 onChange={(e) => setEditedGl(e.target.value)}
-                className="w-full px-3 py-2 rounded-md text-xs bg-bg-subtle border border-border-subtle focus:outline-none focus:border-accent text-text-primary font-mono"
+                className="w-full px-3 py-2 rounded-lg text-xs bg-bg-secondary border border-border-subtle focus:outline-none focus:border-accent text-text-primary font-mono"
               />
+              <span className="text-[11px] text-text-muted block">
+                Original GL: {transaction.gl_account}
+              </span>
             </div>
           )}
 
           {/* Sign-off Notes Field */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-text-primary block">
-              Audit Justification & Sign-Off Notes
+              Audit Justification & Sign-Off Notes (Hashed to SHA-256 Vault)
             </label>
             <textarea
               rows={3}
-              placeholder="e.g. Approved 3% variance based on signed SOW amendment dated Sep 12..."
+              placeholder="e.g. Approved variance based on signed SOW addendum dated Sep 14..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full p-3 rounded-md text-xs bg-bg-card border border-border-subtle focus:outline-none focus:border-accent text-text-primary placeholder:text-text-muted leading-relaxed"
+              className="w-full p-3 rounded-xl text-xs bg-white border border-border-subtle focus:outline-none focus:border-accent text-text-primary placeholder:text-text-muted leading-relaxed"
             />
           </div>
 
-          {/* Double Confirmation Box */}
+          {/* Double Confirmation Box for Materiality */}
           {confirmMaterialApprove && (
-            <div className="p-4 rounded-xl bg-status-verifiedBg border border-status-verified text-status-verified space-y-1.5">
-              <span className="font-bold block flex items-center text-xs">
-                <CheckCircle2 className="w-4 h-4 mr-1 text-status-verified" /> Confirm Material Ledger Approval
+            <div className="p-4 rounded-xl bg-pastel-mint border border-pastel-mintBorder text-status-verified space-y-1.5">
+              <span className="font-bold flex items-center text-xs">
+                <CheckCircle2 className="w-4 h-4 mr-1 text-status-verified" /> Confirm Material Balance Sheet Posting
               </span>
-              <p className="text-text-primary text-xs">
-                You are about to commit <span className="font-bold font-tabular">${transaction.amount.toLocaleString()}</span> for {transaction.vendor} into Northstar Labs' verified general ledger. Click below to execute.
+              <p className="text-text-primary text-xs leading-relaxed">
+                You are about to commit <span className="font-bold font-tabular">{formattedAmount}</span> for {transaction.vendor} into {activeWs.name}'s verified general ledger. This action is irreversible and recorded in the audit trail.
               </p>
             </div>
           )}
@@ -167,37 +207,50 @@ export const HumanReviewModal: React.FC<HumanReviewModalProps> = ({
         </div>
 
         {/* Modal Actions */}
-        <div className="px-6 py-3.5 border-t border-border-subtle bg-bg-card flex flex-wrap items-center justify-between gap-3">
+        <div className="px-6 py-4 border-t border-border-subtle bg-white flex flex-wrap items-center justify-between gap-3">
           
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-text-secondary border border-border-subtle hover:bg-bg-subtle transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary border border-border-subtle hover:bg-bg-subtle transition-colors"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>{isEditing ? 'Cancel Edit' : 'Edit GL'}</span>
+              <span>{isEditing ? 'Cancel Edit' : 'Edit GL Code'}</span>
             </button>
 
             <button
               onClick={() => handleAction('REQUEST_EVIDENCE')}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-text-secondary border border-border-subtle hover:bg-bg-subtle transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary border border-border-subtle hover:bg-bg-subtle transition-colors"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Request Evidence</span>
             </button>
+
+            {onOpenDecisionTrace && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenDecisionTrace(transaction.id);
+                }}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Inspect Trace</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">
             <button
               onClick={() => handleAction('REJECT')}
-              className="px-3.5 py-1.5 rounded-md text-xs font-semibold text-status-blocked bg-status-blockedBg hover:bg-red-100 transition-colors border border-status-blockedBorder"
+              className="px-3.5 py-2 rounded-lg text-xs font-semibold text-status-blocked bg-pastel-pink hover:opacity-90 transition-colors border border-pastel-pinkBorder"
             >
               Reject Item
             </button>
 
             <button
               onClick={() => handleAction(isEditing ? 'EDIT_RESOLUTION' : 'APPROVE')}
-              className="px-4 py-1.5 rounded-md text-xs font-semibold text-white bg-status-verified hover:bg-emerald-700 transition-all shadow-subtle"
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#0E332E] hover:opacity-90 transition-all shadow-card"
             >
               {confirmMaterialApprove ? 'Confirm & Post to Books' : isEditing ? 'Save & Approve' : 'Approve Exception'}
             </button>

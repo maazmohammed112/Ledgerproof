@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
 import { store } from '../lib/store';
+import { detectCurrency, SupportedCurrency, CURRENCY_REGISTRY, formatMoney } from '../lib/money';
 
 interface TryYourDataViewProps {
   onAnalyzeSuccess: () => void;
@@ -103,6 +104,7 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
       else if (lower.includes('vendor') || lower.includes('payee') || lower.includes('merchant') || lower.includes('counterparty') || lower.includes('supplier')) guessMap['vendor'] = h;
       else if (lower.includes('amount') || lower.includes('total') || lower.includes('cost') || lower.includes('net') || lower.includes('val')) guessMap['amount'] = h;
       else if (lower.includes('gl') || lower.includes('account') || lower.includes('category') || lower.includes('code')) guessMap['gl_account'] = h;
+      else if (lower.includes('currency') || lower.includes('curr') || lower === 'ccy') guessMap['currency'] = h;
       else if (lower.includes('inv') || lower.includes('bill') || lower.includes('ref')) guessMap['invoice_number'] = h;
       else if (lower.includes('po') || lower.includes('order')) guessMap['po_number'] = h;
       else if (lower.includes('desc') || lower.includes('memo') || lower.includes('line') || lower.includes('narration')) guessMap['description'] = h;
@@ -186,14 +188,23 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
     setIsProcessing(true);
 
     setTimeout(() => {
-      const existingTxs = store.getTransactions();
+      const activeWs = store.getActiveWorkspace();
+      const existingTxs = store.getTransactions(activeWs.id);
       const existingInvoices = new Set(existingTxs.map(t => t.invoice_ref).filter(Boolean));
       const seenInBatch = new Set<string>();
 
       const newItems: Transaction[] = parsedRawRows.map((row, idx) => {
         const rawAmt = row[columnMapping.amount] ?? row['amount'] ?? row['Amount'] ?? 0;
-        const cleanAmtStr = String(rawAmt).replace(/[$,€£₹\s]/g, '');
-        const amt = parseFloat(cleanAmtStr) || 0;
+        const rawCurr = columnMapping.currency ? row[columnMapping.currency] : (row['currency'] ?? row['Currency'] ?? row['Curr'] ?? row['CCY']);
+        
+        // Comprehensive ISO-4217 Currency Detection (Requirement 10 & 11)
+        const { currency, cleanedAmount } = detectCurrency(rawAmt, {
+          explicitCurrencyColValue: rawCurr,
+          workspaceCountry: activeWs.country,
+          workspaceReportingCurrency: activeWs.reportingCurrency,
+        });
+
+        const amt = Math.abs(cleanedAmount) || 0;
 
         const dateVal = String(row[columnMapping.date] ?? row['date'] ?? row['Date'] ?? new Date().toISOString().split('T')[0]);
         const vendorVal = String(row[columnMapping.vendor] ?? row['vendor'] ?? row['Vendor'] ?? `Vendor ${idx + 1}`);
@@ -207,12 +218,12 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
         if (invStr) seenInBatch.add(invStr);
 
         const isMisclassified = vendorVal.toLowerCase().includes('aws') && glVal.includes('6400');
-        const isMaterialOverage = Math.abs(amt) >= 10000.0;
+        const isMaterialOverage = Math.abs(amt) >= (currency === 'INR' ? 1000000 : 10000);
 
         let riskTier: 'TIER_A' | 'TIER_B' | 'TIER_C' | 'TIER_D' = 'TIER_A';
         let status: Transaction['status'] = 'AUTO_RECONCILED';
         let category: Transaction['category'] | undefined = undefined;
-        let notes = `Verified via Autonomous Ingestion pipeline (${csvFile?.name || 'Uploaded file'}).`;
+        let notes = `Verified via Autonomous Ingestion pipeline (${csvFile?.name || 'Uploaded file'}). Currency: ${currency}.`;
 
         if (isDuplicate) {
           riskTier = 'TIER_D';
@@ -223,7 +234,7 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
           riskTier = 'TIER_C';
           status = 'HUMAN_REVIEW_REQUIRED';
           category = 'PO_VARIANCE';
-          notes = `Transaction amount $${Math.abs(amt).toLocaleString()} exceeds $10,000 threshold. Queued for Human Controller review.`;
+          notes = `Transaction amount exceeds materiality threshold. Queued for Human Controller review.`;
         } else if (isMisclassified) {
           riskTier = 'TIER_B';
           status = 'RESOLVED';
@@ -234,11 +245,14 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
         const txId = `TX-USER-${String(idx + 1).padStart(4, '0')}`;
         return {
           id: txId,
+          workspaceId: activeWs.id,
           date: dateVal,
           vendor: vendorVal,
           description: descVal,
-          amount: Math.abs(amt),
-          currency: 'USD',
+          amount: amt,
+          currency,
+          amount_original: amt,
+          currency_original: currency,
           type: 'DEBIT',
           gl_account: glVal,
           status,
@@ -362,7 +376,7 @@ export const TryYourDataView: React.FC<TryYourDataViewProps> = ({
 
               {csvHeaders.length > 0 ? (
                 <div className="space-y-2.5 text-xs max-h-56 overflow-y-auto pr-1">
-                  {['vendor', 'amount', 'date', 'gl_account', 'invoice_number', 'po_number'].map((field) => (
+                  {['vendor', 'amount', 'currency', 'date', 'gl_account', 'invoice_number', 'po_number'].map((field) => (
                     <div key={field} className="flex items-center justify-between">
                       <span className="text-text-secondary capitalize font-semibold">{field.replace('_', ' ')}:</span>
                       <select

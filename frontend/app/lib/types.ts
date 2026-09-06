@@ -99,10 +99,11 @@ export interface DecisionTrace {
 
 export interface Transaction {
   id: string;
+  workspaceId?: string;
   date: string;
   vendor: string;
   description: string;
-  amount: number;                  // normalized reporting amount (USD)
+  amount: number;                  // normalized reporting amount
   currency: SupportedCurrency;     // reporting currency
   type: 'DEBIT' | 'CREDIT';
   gl_account: string;
@@ -125,6 +126,7 @@ export interface Transaction {
 
 export interface Vendor {
   id: string;
+  workspaceId?: string;
   name: string;
   normalized_name: string;
   tax_id: string;
@@ -138,6 +140,7 @@ export interface Vendor {
 
 export interface PurchaseOrder {
   id: string;
+  workspaceId?: string;
   po_number: string;
   vendor: string;
   issue_date: string;
@@ -150,6 +153,7 @@ export interface PurchaseOrder {
 
 export interface Invoice {
   id: string;
+  workspaceId?: string;
   invoice_number: string;
   vendor: string;
   date: string;
@@ -162,6 +166,7 @@ export interface Invoice {
 
 export interface Policy {
   id: string;
+  workspaceId?: string;
   name: string;
   category: string;
   description: string;
@@ -187,12 +192,15 @@ export interface PolicyProposal {
 }
 
 export interface AuditRecord {
+  id?: string;
   decision_id: string;
+  workspaceId?: string;
   trace_id: string;
   timestamp: string;
   transaction_id: string;
   vendor: string;
   amount: number;
+  currency?: SupportedCurrency;
   agent_name: string;
   agent_version: string;
   model: string;
@@ -260,6 +268,7 @@ export interface ControlPlaneAgentRun {
 
 export interface DataSourceItem {
   id: string;
+  workspaceId?: string;
   name: string;
   category: 'BANK' | 'GENERAL_LEDGER' | 'INVOICES' | 'PURCHASE_ORDERS' | 'VENDOR_MASTER';
   format: 'CSV' | 'XLSX' | 'CONNECTOR' | 'MANUAL';
@@ -279,4 +288,83 @@ export interface ConnectorItem {
   status: 'NOT_CONNECTED' | 'CONNECTED';
   description: string;
   notes: string;
+}
+
+export type CloseStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'NEEDS_REVIEW' | 'READY_TO_CLOSE' | 'CLOSED';
+
+export interface Workspace {
+  id: string;
+  name: string;
+  companyLegalName: string;
+  country: string;
+  reportingCurrency: SupportedCurrency;
+  locale: NumberingLocale;
+  fiscalYear: string;
+  closePeriod: string;
+  industry?: string;
+  description?: string;
+  status: 'ACTIVE' | 'ARCHIVED';
+  closeStatus: CloseStatus;
+  closedAt?: string;
+  closedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  isDemo?: boolean;
+}
+
+export type ReportType = 
+  | 'CLOSE_SUMMARY' 
+  | 'RECONCILIATION' 
+  | 'EXCEPTION' 
+  | 'HUMAN_REVIEW' 
+  | 'AGENT_DECISION' 
+  | 'AUDIT_TRAIL' 
+  | 'DATA_QUALITY' 
+  | 'CURRENCY_EXPOSURE';
+
+export interface FinanceReport {
+  id: string;
+  workspaceId: string;
+  title: string;
+  type: ReportType;
+  closePeriod: string;
+  createdAt: string;
+  summary: string;
+  metrics: Record<string, any>;
+  data?: any[];
+}
+
+export interface ImportBatch {
+  id: string;
+  workspaceId: string;
+  fileName: string;
+  fileSize: number;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  dataQualityPct: number;
+  detectedCurrencies: SupportedCurrency[];
+  detectedVendorsCount: number;
+  potentialDuplicatesCount: number;
+  exceptionsCount: number;
+  importedAt: string;
+}
+
+export interface CloseSummaryMetrics {
+  workspaceId: string;
+  closePeriod: string;
+  totalTransactions: number;
+  totalValue: number;
+  reportingCurrency: SupportedCurrency;
+  autoReconciledCount: number;
+  autoResolvedExceptionsCount: number;
+  humanApprovedCount: number;
+  blockedCount: number;
+  remainingUnresolvedCount: number;
+  reconciliationRatePct: number;
+  dataQualityPct: number;
+  verifierInterventionsCount: number;
+  currenciesCount: number;
+  isReadyToClose: boolean;
+  blockers: string[];
 }

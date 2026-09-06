@@ -21,8 +21,20 @@ import {
   X,
   Check,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Activity,
+  Layers,
+  Building2,
+  Plus,
+  Scale,
+  LogOut,
+  User,
+  SlidersHorizontal
 } from 'lucide-react';
+import { store } from '../lib/store';
+import { CURRENCY_REGISTRY } from '../lib/money';
+import { ConfirmModal } from './ConfirmModal';
 
 interface SidebarProps {
   currentTab: string;
@@ -31,18 +43,14 @@ interface SidebarProps {
   onStartGuidedDemo: () => void;
   onOpenSettings: () => void;
   onOpenHelp: () => void;
+  onOpenWorkspaceModal?: () => void;
+  onLogout?: () => void;
   exceptionCount?: number;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
 }
-
-const ENTITIES = [
-  { id: 'northstar', name: 'Northstar Labs Inc.', cycle: 'Sep Close · Active', flag: 'US-GAAP' },
-  { id: 'horizon', name: 'Horizon FinTech UK', cycle: 'Q3 Close · Mirror', flag: 'IFRS-15' },
-  { id: 'apex', name: 'Apex Global EMEA', cycle: 'Oct Close · Sandbox', flag: 'Dual-Audit' },
-];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
@@ -51,42 +59,94 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onStartGuidedDemo,
   onOpenSettings,
   onOpenHelp,
-  exceptionCount = 7,
+  onOpenWorkspaceModal,
+  onLogout,
+  exceptionCount = 0,
   isOpenMobile,
   onCloseMobile,
   isCollapsed = false,
   onToggleCollapse,
 }) => {
-  const [isEntityMenuOpen, setIsEntityMenuOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState(ENTITIES[0]);
+  const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const mainNavigation = [
-    { id: 'command-center', label: 'Overview', icon: LayoutDashboard },
-    { id: 'exceptions', label: 'Exceptions', icon: CircleAlert, badge: exceptionCount },
-    { id: 'agent-lab', label: 'Agent Lab', icon: Bot },
-    { id: 'evaluations', label: 'Evaluations', icon: BarChart3 },
-    { id: 'policies', label: 'Policies', icon: ScrollText },
-    { id: 'audit-vault', label: 'Audit', icon: FileSearch },
-    { id: 'architecture', label: 'Architecture', icon: Network },
-    { id: 'try-data', label: 'Try Your Data', icon: Upload },
+  const activeWs = store.getActiveWorkspace();
+  const workspaces = store.getWorkspaces();
+  const currencyMeta = CURRENCY_REGISTRY[activeWs.reportingCurrency] || CURRENCY_REGISTRY.USD;
+
+  interface NavItem {
+    id: string;
+    label: string;
+    icon: any;
+    badge?: number;
+  }
+
+  interface NavSection {
+    title: string;
+    items: NavItem[];
+  }
+
+  // Nav categories matching Requirement 18 & Reference 5
+  const navSections: NavSection[] = [
+    {
+      title: 'WORKSPACE',
+      items: [
+        { id: 'command-center', label: 'Overview', icon: LayoutDashboard },
+        { id: 'control-plane', label: 'Control Plane', icon: Layers },
+        { id: 'data-sources', label: 'Data Sources', icon: Database },
+        { id: 'transactions', label: 'Transactions', icon: FileText },
+        { id: 'reconciliation', label: 'Reconciliation', icon: Scale },
+        { id: 'exceptions', label: 'Exceptions', icon: CircleAlert, badge: exceptionCount },
+      ]
+    },
+    {
+      title: 'INTELLIGENCE',
+      items: [
+        { id: 'agent-lab', label: 'Agent Lab', icon: Bot },
+        { id: 'evaluations', label: 'Evaluations', icon: BarChart3 },
+        { id: 'policies', label: 'Policies', icon: ScrollText },
+      ]
+    },
+    {
+      title: 'GOVERNANCE',
+      items: [
+        { id: 'audit-vault', label: 'Audit Vault', icon: FileSearch },
+        { id: 'reports', label: 'Reports', icon: FileSpreadsheetIcon },
+      ]
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        { id: 'architecture', label: 'Architecture', icon: Network },
+        { id: 'observability', label: 'Observability', icon: Activity },
+      ]
+    }
   ];
 
-  const secondaryNavigation = [
-    { id: 'decision-trace', label: 'Decision Trace', icon: Route },
-    { id: 'built-with-ao', label: 'AO Engine', icon: ShieldCheck },
-    { id: 'landing', label: 'Product Story', icon: FileText },
-  ];
+  const handleSelectWorkspace = (id: string) => {
+    store.setActiveWorkspace(id);
+    setIsWorkspaceMenuOpen(false);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false);
+    if (onLogout) {
+      onLogout();
+    } else {
+      setCurrentTab('landing');
+    }
+  };
 
   const renderContent = (isDrawer = false) => {
     const showLabels = !isCollapsed || isDrawer;
 
     return (
-      <div className="flex flex-col h-full bg-bg-secondary select-none">
+      <div className="flex flex-col h-full bg-white border-r border-border-subtle select-none">
         
         {/* Top Section: Brand & Workspace */}
         <div className="shrink-0 border-b border-border-subtle">
           
-          {/* Logo Bar */}
+          {/* Brand Mark */}
           <div className={`px-4 py-4 flex items-center ${isCollapsed && !isDrawer ? 'justify-center' : 'justify-between'}`}>
             <button
               onClick={() => {
@@ -96,9 +156,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="flex items-center space-x-2.5 text-left group focus-visible:outline-none"
               title="LedgerProof Overview"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm border border-slate-800">
+              <div className="w-8 h-8 rounded-lg bg-[#0E332E] p-1.5 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm">
                 <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-                  <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#4F46E5" strokeWidth="3.5" strokeLinecap="round"/>
+                  <path d="M12 14H30C32.2 14 34 15.8 34 18V18" stroke="#DDF7EE" strokeWidth="3.5" strokeLinecap="round"/>
                   <path d="M14 14V34C14 35.1 14.9 36 16 36H36" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M21 21V29C21 30.1 21.9 31 23 31H34" stroke="#818CF8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M28 16L32 20L40 12" stroke="#10B981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -139,57 +199,75 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* Company / Workspace Switcher */}
+          {/* Dynamic Active Workspace Switcher (Requirement 1, 2, 4) */}
           {showLabels ? (
             <div className="px-3 pb-3 relative">
               <button
-                onClick={() => setIsEntityMenuOpen(!isEntityMenuOpen)}
-                className="w-full p-2 rounded-lg bg-bg-card border border-border-subtle hover:border-text-secondary/30 transition-all flex items-center justify-between text-left group shadow-subtle"
+                onClick={() => setIsWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
+                className="w-full p-2 rounded-xl bg-bg-primary border border-border-subtle hover:border-text-secondary/40 transition-all flex items-center justify-between text-left group shadow-subtle"
               >
                 <div className="flex items-center space-x-2 truncate">
-                  <div className="w-5 h-5 rounded bg-accent-light text-accent flex items-center justify-center font-bold text-[10px] shrink-0">
-                    NL
+                  <div className="w-6 h-6 rounded-lg bg-pastel-mint border border-pastel-mintBorder flex items-center justify-center text-xs shrink-0 font-medium">
+                    {currencyMeta.flag}
                   </div>
                   <div className="truncate">
-                    <div className="font-medium text-xs text-text-primary truncate group-hover:text-accent transition-colors">
-                      {selectedEntity.name}
+                    <div className="font-semibold text-xs text-text-primary truncate">
+                      {activeWs.name}
                     </div>
                     <div className="text-[10px] text-text-muted truncate">
-                      {selectedEntity.cycle}
+                      {activeWs.reportingCurrency} &bull; {activeWs.closePeriod}
                     </div>
                   </div>
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-text-muted shrink-0 ml-1 transition-transform duration-150 ${isEntityMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-text-muted shrink-0 ml-1 transition-transform duration-150 ${isWorkspaceMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Entity Selector Dropdown */}
-              {isEntityMenuOpen && (
-                <div className="absolute left-3 right-3 mt-1.5 bg-white border border-border-subtle rounded-xl shadow-modal z-50 py-1 divide-y divide-border-subtle/50 animate-fade-in">
+              {/* Workspace Selector Dropdown */}
+              {isWorkspaceMenuOpen && (
+                <div className="absolute left-3 right-3 mt-1.5 bg-white border border-border-subtle rounded-2xl shadow-modal z-50 py-1.5 divide-y divide-border-subtle/50 animate-fade-in">
                   <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                    Switch Active Ledger
+                    Switch Workspace ({workspaces.length})
                   </div>
-                  <div className="py-0.5">
-                    {ENTITIES.map((ent) => {
-                      const isSelected = selectedEntity.id === ent.id;
+                  
+                  <div className="py-1 max-h-48 overflow-y-auto">
+                    {workspaces.map((ws) => {
+                      const isSelected = activeWs.id === ws.id;
+                      const cMeta = CURRENCY_REGISTRY[ws.reportingCurrency] || CURRENCY_REGISTRY.USD;
                       return (
                         <button
-                          key={ent.id}
-                          onClick={() => {
-                            setSelectedEntity(ent);
-                            setIsEntityMenuOpen(false);
-                          }}
+                          key={ws.id}
+                          onClick={() => handleSelectWorkspace(ws.id)}
                           className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-bg-subtle transition-colors text-xs ${
-                            isSelected ? 'bg-bg-subtle/70 font-semibold text-text-primary' : 'text-text-secondary'
+                            isSelected ? 'bg-pastel-mint/40 font-semibold text-text-primary' : 'text-text-secondary'
                           }`}
                         >
                           <div className="truncate pr-2">
-                            <div className="truncate">{ent.name}</div>
-                            <div className="text-[10px] text-text-muted font-normal">{ent.cycle}</div>
+                            <div className="flex items-center space-x-1.5 truncate">
+                              <span>{cMeta.flag}</span>
+                              <span className="truncate">{ws.name}</span>
+                            </div>
+                            <div className="text-[10px] text-text-muted font-normal">
+                              {ws.reportingCurrency} &bull; {ws.closePeriod}
+                            </div>
                           </div>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-accent shrink-0" />}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-emerald-800 shrink-0" />}
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Trigger to open full Workspace Modal */}
+                  <div className="pt-1 px-1">
+                    <button
+                      onClick={() => {
+                        setIsWorkspaceMenuOpen(false);
+                        onOpenWorkspaceModal?.();
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-primary hover:bg-bg-primary flex items-center justify-center space-x-1.5 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>+ Create / Manage Workspaces</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -197,212 +275,111 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <div className="px-2 pb-3 flex justify-center">
               <button
-                onClick={() => onToggleCollapse && onToggleCollapse()}
-                className="w-8 h-8 rounded-lg bg-bg-card border border-border-subtle flex items-center justify-center font-bold text-[10px] text-accent hover:border-accent shadow-subtle"
-                title={`${selectedEntity.name} (${selectedEntity.cycle})`}
+                onClick={() => onOpenWorkspaceModal?.()}
+                className="w-8 h-8 rounded-lg bg-pastel-mint border border-pastel-mintBorder flex items-center justify-center text-xs shadow-subtle"
+                title={`${activeWs.name} (${activeWs.reportingCurrency})`}
               >
-                NL
+                {currencyMeta.flag}
               </button>
             </div>
           )}
         </div>
 
-        {/* Scrollable Middle Navigation */}
-        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4 text-xs">
-          
-          {/* Main Navigation */}
-          <div className="space-y-0.5">
-            {showLabels && (
-              <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                Platform
-              </div>
-            )}
-            {mainNavigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setCurrentTab(item.id);
-                    if (isDrawer) onCloseMobile();
-                  }}
-                  title={!showLabels ? item.label : undefined}
-                  className={`w-full flex items-center ${
-                    showLabels ? 'justify-between px-2.5 py-1.5' : 'justify-center p-2'
-                  } rounded-md text-xs font-medium transition-all ${
-                    isActive
-                      ? 'bg-bg-subtle text-text-primary font-semibold shadow-subtle border-l-2 border-accent'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-black/[0.03]'
-                  }`}
-                >
-                  <span className={`flex items-center ${showLabels ? 'space-x-2.5' : ''} truncate`}>
-                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-accent' : 'text-text-secondary'}`} />
-                    {showLabels && <span className="truncate">{item.label}</span>}
-                  </span>
+        {/* Scrollable Navigation Groups (Matching Reference 5 pill style) */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-5 text-xs">
+          {navSections.map((sec) => (
+            <div key={sec.title} className="space-y-1">
+              {showLabels && (
+                <div className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                  {sec.title}
+                </div>
+              )}
 
-                  {showLabels && item.badge !== undefined && item.badge > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold shrink-0 ${
-                      isActive 
-                        ? 'bg-status-reviewBg text-status-review' 
-                        : 'bg-black/5 text-text-secondary'
-                    }`}>
-                      {item.badge}
+              {sec.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentTab(item.id);
+                      if (isDrawer) onCloseMobile();
+                    }}
+                    title={!showLabels ? item.label : undefined}
+                    className={`w-full flex items-center ${
+                      showLabels ? 'justify-between px-3 py-2' : 'justify-center p-2.5'
+                    } rounded-xl text-xs transition-all ${
+                      isActive
+                        ? 'bg-[#0E332E] text-white font-semibold shadow-card'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary font-medium'
+                    }`}
+                  >
+                    <span className={`flex items-center ${showLabels ? 'space-x-2.5' : ''} truncate`}>
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-pastel-mint' : 'text-text-muted'}`} />
+                      {showLabels && <span className="truncate">{item.label}</span>}
                     </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
 
-          {/* Secondary Inspection Section */}
-          <div className="space-y-0.5 pt-1 border-t border-border-subtle/50">
-            {showLabels && (
-              <div className="px-2 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                Telemetry & System
-              </div>
-            )}
-            {secondaryNavigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setCurrentTab(item.id);
-                    if (isDrawer) onCloseMobile();
-                  }}
-                  title={!showLabels ? item.label : undefined}
-                  className={`w-full flex items-center ${
-                    showLabels ? 'justify-start space-x-2.5 px-2.5 py-1.5' : 'justify-center p-2'
-                  } rounded-md text-xs font-medium transition-all ${
-                    isActive
-                      ? 'bg-bg-subtle text-text-primary font-semibold shadow-subtle border-l-2 border-accent'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-black/[0.03]'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-accent' : 'text-text-secondary'}`} />
-                  {showLabels && <span className="truncate">{item.label}</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Support / Secondary Controls */}
-          <div className="space-y-0.5 pt-1 border-t border-border-subtle/50">
-            {showLabels && (
-              <div className="px-2 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                Support
-              </div>
-            )}
-            
-            {/* Guided Tour Trigger */}
-            <button
-              onClick={() => {
-                onStartGuidedDemo();
-                if (isDrawer) onCloseMobile();
-              }}
-              title={!showLabels ? 'Guided Tour' : undefined}
-              className={`w-full flex items-center ${
-                showLabels ? 'space-x-2.5 px-2.5 py-1.5' : 'justify-center p-2'
-              } rounded-md text-xs font-medium text-accent hover:bg-accent-light/60 transition-colors`}
-            >
-              <Compass className="w-4 h-4 text-accent shrink-0" />
-              {showLabels && <span>Guided Demo Flow</span>}
-            </button>
-
-            {/* Settings Trigger */}
-            <button
-              onClick={() => {
-                onOpenSettings();
-                if (isDrawer) onCloseMobile();
-              }}
-              title={!showLabels ? 'Settings' : undefined}
-              className={`w-full flex items-center ${
-                showLabels ? 'space-x-2.5 px-2.5 py-1.5' : 'justify-center p-2'
-              } rounded-md text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-black/[0.03] transition-colors`}
-            >
-              <Settings className="w-4 h-4 text-text-secondary shrink-0" />
-              {showLabels && <span>Settings</span>}
-            </button>
-
-            {/* Help / Docs Trigger */}
-            <button
-              onClick={() => {
-                onOpenHelp();
-                if (isDrawer) onCloseMobile();
-              }}
-              title={!showLabels ? 'Documentation' : undefined}
-              className={`w-full flex items-center ${
-                showLabels ? 'space-x-2.5 px-2.5 py-1.5' : 'justify-center p-2'
-              } rounded-md text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-black/[0.03] transition-colors`}
-            >
-              <BookOpen className="w-4 h-4 text-text-secondary shrink-0" />
-              {showLabels && <span>Help & Docs</span>}
-            </button>
-          </div>
-
+                    {showLabels && item.badge !== undefined && item.badge > 0 && (
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                        isActive 
+                          ? 'bg-pastel-pink text-status-blocked' 
+                          : 'bg-pastel-pink text-status-blocked border border-pastel-pinkBorder'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
-        {/* Bottom Section: Velocity Mini-Widget, Reset Demo, and User Profile */}
-        <div className="shrink-0 p-2.5 border-t border-border-subtle bg-bg-secondary space-y-2 text-xs">
-          
-          {/* Close Velocity Mini Widget */}
+        {/* Bottom Section: User Profile & Real Logout (Requirement 20 & Reference 5) */}
+        <div className="shrink-0 p-3 border-t border-border-subtle bg-bg-primary/60">
           {showLabels ? (
-            <div className="p-2.5 rounded-lg bg-bg-card border border-border-subtle space-y-1.5 font-tabular shadow-subtle">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-text-muted">Close Velocity</span>
-                <span className="font-semibold text-status-verified">97.4%</span>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-border-subtle shadow-subtle">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-pastel-mint text-text-primary font-bold text-xs flex items-center justify-center shrink-0 border border-pastel-mintBorder">
+                  BS
+                </div>
+                <div className="truncate">
+                  <div className="text-xs font-semibold text-text-primary truncate">Budiono Siregar</div>
+                  <div className="text-[10px] text-text-muted truncate">Financial Controller</div>
+                </div>
               </div>
-              <div className="w-full bg-black/5 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-status-verified h-full w-[97.4%] transition-all duration-500" />
-              </div>
-              <div className="flex items-center justify-between text-[10px] text-text-muted pt-0.5">
-                <span>4,082 / 4,128 Rec.</span>
-                <button
-                  onClick={onResetDemo}
-                  title="Reset Demo Dataset"
-                  className="text-text-secondary hover:text-text-primary flex items-center space-x-0.5 transition-colors font-medium"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>Reset</span>
-                </button>
-              </div>
+
+              <button
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="p-1.5 rounded-lg text-text-muted hover:text-status-blocked hover:bg-pastel-pink/50 transition-colors"
+                title="Log out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
           ) : (
             <div className="flex justify-center">
               <button
-                onClick={onResetDemo}
-                title="Reset Demo Dataset (97.4% reconciled)"
-                className="p-1.5 rounded-md hover:bg-black/5 text-text-muted hover:text-text-primary transition-colors"
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="w-8 h-8 rounded-full bg-white border border-border-subtle flex items-center justify-center text-text-muted hover:text-status-blocked shadow-subtle"
+                title="Log out"
               >
-                <RotateCcw className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
-
-          {/* User Profile Section */}
-          <div className={`flex items-center ${showLabels ? 'justify-between px-1 py-1' : 'justify-center p-1'} rounded-md hover:bg-black/[0.03] transition-colors cursor-default`}>
-            <div className="flex items-center space-x-2 truncate">
-              <div className="w-6 h-6 rounded bg-text-primary text-white flex items-center justify-center font-mono font-bold text-[10px] shrink-0 shadow-subtle">
-                MV
-              </div>
-              {showLabels && (
-                <div className="truncate">
-                  <div className="font-medium text-text-primary text-[11px] truncate">Marcus Vance</div>
-                  <div className="text-[10px] text-text-muted truncate">Controller &bull; Admin</div>
-                </div>
-              )}
-            </div>
-            {showLabels && (
-              <span 
-                className="w-2 h-2 rounded-full bg-status-verified shrink-0 ml-1.5" 
-                title="Active Connection & Verified Session" 
-              />
-            )}
-          </div>
-
         </div>
+
+        {/* Real Logout Confirmation Modal */}
+        <ConfirmModal
+          isOpen={isLogoutModalOpen}
+          title="Log out of LedgerProof?"
+          description="You will be returned to the product landing page. Your workspace data, transactions, and audit logs remain safely saved in local storage."
+          confirmLabel="Log Out"
+          isDestructive={false}
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setIsLogoutModalOpen(false)}
+        />
 
       </div>
     );
@@ -410,25 +387,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop / Tablet Sidebar */}
+      {/* Desktop Persistent Sidebar */}
       <aside 
-        className={`hidden md:block shrink-0 h-screen sticky top-0 z-30 border-r border-border-subtle transition-[width] duration-200 ease-in-out ${
-          isCollapsed ? 'w-16' : 'w-64'
+        className={`hidden md:block shrink-0 transition-all duration-200 z-30 h-screen sticky top-0 ${
+          isCollapsed ? 'w-16' : 'w-60 lg:w-64'
         }`}
       >
         {renderContent(false)}
       </aside>
 
-      {/* Mobile Slide-out Drawer */}
+      {/* Mobile Drawer Overlay */}
       {isOpenMobile && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs md:hidden animate-fade-in"
-          onClick={onCloseMobile}
-        >
+        <div className="fixed inset-0 z-50 md:hidden flex animate-fade-in">
           <div 
-            className="w-72 h-full max-w-[85vw] shadow-modal animate-fade-in border-r border-border-subtle"
-            onClick={(e) => e.stopPropagation()}
-          >
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onCloseMobile}
+          />
+          <div className="relative w-72 max-w-[85vw] h-full shadow-modal z-10">
             {renderContent(true)}
           </div>
         </div>
@@ -436,3 +411,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
+function FileSpreadsheetIcon(props: any) {
+  return <FileText {...props} />;
+}

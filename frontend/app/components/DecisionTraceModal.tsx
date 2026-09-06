@@ -18,9 +18,15 @@ import {
   ChevronRight,
   Database,
   ArrowRight,
-  UserCheck
+  UserCheck,
+  HelpCircle,
+  Sparkles,
+  RefreshCw,
+  ShieldAlert
 } from 'lucide-react';
-import { DecisionTrace, Transaction } from '../lib/types';
+import { DecisionTrace, Transaction, RiskTier } from '../lib/types';
+import { store } from '../lib/store';
+import { formatMoney } from '../lib/money';
 
 interface DecisionTraceModalProps {
   trace: DecisionTrace | null;
@@ -36,6 +42,7 @@ export const DecisionTraceModal: React.FC<DecisionTraceModalProps> = ({
   onOpenReviewModal,
 }) => {
   const [toolsExpanded, setToolsExpanded] = useState(false);
+  const [overrideFeedback, setOverrideFeedback] = useState<string | null>(null);
 
   // ESC key to close
   useEffect(() => {
@@ -47,6 +54,9 @@ export const DecisionTraceModal: React.FC<DecisionTraceModalProps> = ({
   }, [onClose]);
 
   if (!trace || !transaction) return null;
+
+  const activeWs = store.getActiveWorkspace();
+  const materialityCeiling = activeWs.reportingCurrency === 'INR' ? 1000000 : 10000;
 
   const verifier = trace.verifier;
   const isDisagreement = verifier.disagreement_detected;
@@ -125,7 +135,7 @@ export const DecisionTraceModal: React.FC<DecisionTraceModalProps> = ({
             <div>
               <span className="text-text-muted block text-[11px]">Material Amount</span>
               <span className="font-semibold text-text-primary mt-0.5 block text-sm">
-                ${transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {transaction.currency}
+                {formatMoney(transaction.amount, transaction.currency || activeWs.reportingCurrency, activeWs.locale)}
               </span>
             </div>
             <div>
@@ -286,22 +296,115 @@ export const DecisionTraceModal: React.FC<DecisionTraceModalProps> = ({
                 </div>
               </div>
 
-              {/* Step 6: Autonomy Gate Ruling */}
-              <div className="p-4 rounded-xl bg-bg-card border border-border-subtle flex items-start space-x-3">
-                <div className="w-6 h-6 rounded bg-bg-subtle flex items-center justify-center font-mono font-bold text-text-primary text-[11px] shrink-0 mt-0.5">
-                  6
-                </div>
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-text-primary">Autonomy Gate &bull; Deterministic Classification</span>
-                    <span className="font-mono font-bold text-xs px-2 py-0.2 rounded bg-text-primary text-white">
-                      {trace.autonomy_gate.tier}
-                    </span>
+              {/* Step 6: Autonomy Gate Ruling & Tier Selection Rationale */}
+              <div className="p-5 rounded-2xl bg-bg-card border border-border-subtle space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 rounded-lg bg-[#0E332E] flex items-center justify-center font-mono font-bold text-white text-[11px] shrink-0 mt-0.5">
+                    6
                   </div>
-                  <p className="text-text-secondary">
-                    {trace.autonomy_gate.reason}
-                  </p>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-text-primary text-xs">
+                        Autonomy Gate &bull; Deterministic Risk Tiering &amp; AI Justification
+                      </span>
+                      <span className="font-mono font-bold text-xs px-2.5 py-0.5 rounded-full bg-[#0E332E] text-white">
+                        {trace.autonomy_gate.tier}
+                      </span>
+                    </div>
+                    <p className="text-text-secondary leading-relaxed pt-0.5">
+                      {trace.autonomy_gate.reason}
+                    </p>
+                  </div>
                 </div>
+
+                {/* 4-Tier Evaluation Matrix */}
+                <div className="p-3.5 rounded-xl bg-bg-secondary border border-border-subtle space-y-2.5">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-text-muted font-semibold block">
+                    Four-Tier Autonomy Decision Matrix (Financial Safety Invariants):
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div className={`p-2 rounded-lg border flex items-start space-x-2 ${
+                      trace.autonomy_gate.tier === 'TIER_A' 
+                        ? 'bg-pastel-mint border-pastel-mintBorder text-status-verified font-medium' 
+                        : 'bg-white border-border-subtle text-text-muted'
+                    }`}>
+                      <span className="font-bold shrink-0">Tier A:</span>
+                      <span>Auto-Execute. Zero variance, below materiality ceiling. {trace.autonomy_gate.tier === 'TIER_A' ? '✓ Selected' : '— Skipped'}</span>
+                    </div>
+
+                    <div className={`p-2 rounded-lg border flex items-start space-x-2 ${
+                      trace.autonomy_gate.tier === 'TIER_B' 
+                        ? 'bg-pastel-aqua border-pastel-aquaBorder text-accent font-medium' 
+                        : 'bg-white border-border-subtle text-text-muted'
+                    }`}>
+                      <span className="font-bold shrink-0">Tier B:</span>
+                      <span>Flagged Auto-Execute. Minor operational variance (&lt; 2%). {trace.autonomy_gate.tier === 'TIER_B' ? '✓ Selected' : '— Skipped'}</span>
+                    </div>
+
+                    <div className={`p-2 rounded-lg border flex items-start space-x-2 ${
+                      trace.autonomy_gate.tier === 'TIER_C' 
+                        ? 'bg-pastel-cream border-[#FDE68A] text-[#B45309] font-medium' 
+                        : 'bg-white border-border-subtle text-text-muted'
+                    }`}>
+                      <span className="font-bold shrink-0">Tier C:</span>
+                      <span>Human Controller Required. Amount &ge; {formatMoney(materialityCeiling, transaction.currency || activeWs.reportingCurrency, activeWs.locale)} ceiling. {trace.autonomy_gate.tier === 'TIER_C' ? '✓ Triggered' : '— Passed'}</span>
+                    </div>
+
+                    <div className={`p-2 rounded-lg border flex items-start space-x-2 ${
+                      trace.autonomy_gate.tier === 'TIER_D' 
+                        ? 'bg-pastel-pink border-pastel-pinkBorder text-status-blocked font-medium' 
+                        : 'bg-white border-border-subtle text-text-muted'
+                    }`}>
+                      <span className="font-bold shrink-0">Tier D:</span>
+                      <span>Hard Block. Verifier Disagreement or Duplicate Collision &ge; 85%. {trace.autonomy_gate.tier === 'TIER_D' ? '✓ Hard Blocked' : '— Passed'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interactive Controller Action Options for the Tier */}
+                <div className="pt-2 border-t border-border-subtle flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-text-muted">
+                    Controller Options on {trace.autonomy_gate.tier}:
+                  </span>
+
+                  <div className="flex items-center space-x-2">
+                    {isReviewRequired && onOpenReviewModal && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onOpenReviewModal(transaction);
+                        }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0E332E] hover:opacity-90 shadow-subtle flex items-center space-x-1.5"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span>Sign-Off as Controller</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        const newTier: RiskTier = trace.autonomy_gate.tier === 'TIER_C' ? 'TIER_B' : 'TIER_C';
+                        store.updateTransaction(transaction.id, {
+                          risk_tier: newTier,
+                          notes: `${transaction.notes || ''} [Trace Console: Autonomy Tier manually updated to ${newTier}]`.trim()
+                        }, activeWs.id);
+                        setOverrideFeedback(`Transaction tier adjusted to ${newTier} with immutable audit log.`);
+                        setTimeout(() => setOverrideFeedback(null), 4000);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary bg-white border border-border-subtle hover:bg-bg-subtle hover:text-text-primary"
+                    >
+                      Override Autonomy Tier
+                    </button>
+                  </div>
+                </div>
+
+                {overrideFeedback && (
+                  <div className="p-2.5 rounded-lg bg-pastel-mint border border-pastel-mintBorder text-status-verified font-medium text-xs flex items-center space-x-2 animate-fade-in">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{overrideFeedback}</span>
+                  </div>
+                )}
               </div>
 
               {/* Step 7: Final Execution Status */}

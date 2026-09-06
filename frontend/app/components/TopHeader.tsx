@@ -17,9 +17,13 @@ import {
   User,
   ShieldCheck,
   AlertTriangle,
-  FileCheck
+  FileCheck,
+  Building2,
+  LogOut
 } from 'lucide-react';
 import { Transaction } from '../lib/types';
+import { store } from '../lib/store';
+import { CURRENCY_REGISTRY, formatMoney } from '../lib/money';
 
 interface TopHeaderProps {
   currentTab: string;
@@ -30,6 +34,8 @@ interface TopHeaderProps {
   onStartGuidedDemo: () => void;
   onOpenSettings: () => void;
   onOpenHelp: () => void;
+  onOpenWorkspaceModal?: () => void;
+  onLogout?: () => void;
   isRunningClose: boolean;
   transactions?: Transaction[];
   onOpenDecisionTrace?: (txId: string) => void;
@@ -46,6 +52,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onStartGuidedDemo,
   onOpenSettings,
   onOpenHelp,
+  onOpenWorkspaceModal,
+  onLogout,
   isRunningClose,
   transactions = [],
   onOpenDecisionTrace,
@@ -56,6 +64,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const activeWs = store.getActiveWorkspace();
+  const metrics = store.getCloseSummaryMetrics(activeWs.id);
+  const currencyMeta = CURRENCY_REGISTRY[activeWs.reportingCurrency] || CURRENCY_REGISTRY.USD;
 
   // Keyboard shortcut for Command+K / Ctrl+K
   useEffect(() => {
@@ -76,58 +88,73 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const pageMeta: Record<string, { title: string; category: string; description: string }> = {
     'command-center': {
       title: 'Command Center',
-      category: 'Financial Operations',
-      description: 'September 2026 Close Pipeline & Autonomous Velocity',
+      category: 'Workspace',
+      description: `${activeWs.closePeriod} Pipeline & Velocity`,
+    },
+    'control-plane': {
+      title: 'Control Plane',
+      category: 'Workspace',
+      description: 'Multi-Agent Autonomous Worker Sessions',
+    },
+    'data-sources': {
+      title: 'Data Sources & Connectors',
+      category: 'Workspace',
+      description: 'Multi-Sheet File Ingestion & ERP Connectors',
+    },
+    'transactions': {
+      title: 'Transactions Ledger',
+      category: 'Workspace',
+      description: 'Scoped Transaction Records & Decimal Accounting',
+    },
+    'reconciliation': {
+      title: '3-Way Reconciliation',
+      category: 'Workspace',
+      description: 'Bank feeds vs General Ledger & PO matching',
     },
     'exceptions': {
       title: 'Exception Inbox',
-      category: 'Financial Operations',
-      description: 'Policy Discrepancies & Adversarial Verifier Flags',
+      category: 'Workspace',
+      description: 'Policy Discrepancies & Adversarial Flags',
     },
     'decision-trace': {
       title: 'Decision Trace',
-      category: 'Forensic Telemetry',
+      category: 'Intelligence',
       description: 'Chronological Multi-Agent Verification Chains',
     },
     'agent-lab': {
       title: 'Agent Lab',
-      category: 'Autonomous Governance',
-      description: 'Specialized Finance Agents & Simulation Playground',
+      category: 'Intelligence',
+      description: 'Finance Worker Simulation Playground',
     },
     'evaluations': {
       title: 'Evaluation Lab',
-      category: 'Autonomous Governance',
+      category: 'Intelligence',
       description: '40 Ground-Truth Benchmark Cases & Accuracy Gains',
     },
     'policies': {
       title: 'Policy Center',
-      category: 'Autonomous Governance',
+      category: 'Intelligence',
       description: 'Statutory Control Bounds & Empirical Rule Learning',
     },
     'audit-vault': {
       title: 'Audit Vault',
-      category: 'Compliance & Audit',
+      category: 'Governance',
       description: 'Immutable Cryptographic Event Stream (SHA-256)',
+    },
+    'reports': {
+      title: 'Close Reports',
+      category: 'Governance',
+      description: '8 Audited Financial Statements & Verification Exports',
     },
     'architecture': {
       title: 'System Architecture',
-      category: 'System & Tools',
+      category: 'System',
       description: 'Deterministic Python Tools & Dual-Agent Consensus',
     },
-    'try-data': {
-      title: 'Try Your Data',
-      category: 'System & Tools',
-      description: 'CSV Column Mapping & Single Transaction Ingestion',
-    },
-    'built-with-ao': {
-      title: 'AO Engine',
-      category: 'System & Tools',
-      description: 'Autonomous Orchestration Transparency & 10 Workstreams',
-    },
-    'landing': {
-      title: 'Product Story',
-      category: 'LedgerProof Core',
-      description: 'Finance agents should prove their work',
+    'observability': {
+      title: 'Neatlogs Telemetry',
+      category: 'System',
+      description: 'OpenTelemetry Trace Spans & $0.00 Inference Cost',
     },
   };
 
@@ -137,35 +164,33 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     description: 'Autonomous Office of the CFO',
   };
 
-  // Recent system notifications
   const notifications = [
     {
       id: '1',
-      title: 'Dual-Consensus Reached',
-      desc: 'Verifier and Generator matched on 12 journal entries',
+      title: 'Independent Verifier Veto',
+      desc: 'Intercepted AWS GL 6400 misclassification proposal',
       time: '2m ago',
       icon: ShieldCheck,
-      iconColor: 'text-status-verified',
+      iconColor: 'text-status-blocked',
     },
     {
       id: '2',
-      title: 'Tier C Flag Raised',
-      desc: 'AWS EMEA $14,200.00 exceeds standard software threshold',
-      time: '14m ago',
-      icon: AlertTriangle,
-      iconColor: 'text-status-review',
+      title: 'Deterministic Match Complete',
+      desc: `${metrics.autoReconciledCount} transactions cleared within tolerance`,
+      time: '12m ago',
+      icon: CheckCircle2,
+      iconColor: 'text-emerald-700',
     },
     {
       id: '3',
-      title: 'Audit Block SHA-256 Anchored',
-      desc: 'Block #4082 finalized with deterministic proof',
-      time: '45m ago',
+      title: 'SHA-256 Block Anchored',
+      desc: `Ledger block for ${activeWs.name} synchronized`,
+      time: '35m ago',
       icon: FileCheck,
-      iconColor: 'text-accent',
+      iconColor: 'text-text-primary',
     },
   ];
 
-  // Quick search results
   const searchResults = searchQuery.trim()
     ? [
         ...transactions
@@ -180,17 +205,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           .map((tx) => ({
             type: 'transaction',
             id: tx.id,
-            title: `${tx.vendor} · $${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+            title: `${tx.vendor} · ${formatMoney(tx.amount, tx.currency, activeWs.locale)}`,
             subtitle: `${tx.id} · ${tx.risk_tier || 'TIER_C'} · ${tx.status}`,
           })),
-        { type: 'view', id: 'command-center', title: 'Overview / Command Center', subtitle: 'Pipeline metrics & velocity' },
+        { type: 'view', id: 'command-center', title: 'Command Center', subtitle: 'Pipeline metrics & velocity' },
+        { type: 'view', id: 'reports', title: 'Close Reports', subtitle: 'Export 8 audited statements' },
         { type: 'view', id: 'exceptions', title: 'Exception Inbox', subtitle: 'Review active discrepancies & flags' },
-        { type: 'view', id: 'agent-lab', title: 'Agent Lab', subtitle: 'Inspect agent reasoning & prompt tools' },
-        { type: 'view', id: 'evaluations', title: 'Evaluation Lab', subtitle: '40 Ground-Truth benchmark tests' },
-        { type: 'view', id: 'policies', title: 'Policy Center', subtitle: 'Manage statutory rules & thresholds' },
-        { type: 'view', id: 'audit-vault', title: 'Audit Vault', subtitle: 'Cryptographic JSON event log' },
-        { type: 'view', id: 'architecture', title: 'System Architecture', subtitle: 'Dual-Agent verification flow' },
-        { type: 'view', id: 'try-data', title: 'Try Your Data', subtitle: 'Upload CSV or test transaction' },
+        { type: 'view', id: 'data-sources', title: 'Data Sources', subtitle: 'Upload CSV/XLSX or configure connectors' },
+        { type: 'view', id: 'observability', title: 'Neatlogs Telemetry', subtitle: 'Span tracking & $0.00 inference' },
       ].filter((item) =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
@@ -199,15 +221,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-20 bg-bg-secondary/90 backdrop-blur-md border-b border-border-subtle h-14 shrink-0 flex items-center px-4 sm:px-6 select-none">
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-border-subtle h-16 shrink-0 flex items-center px-4 sm:px-6 select-none">
         <div className="w-full flex items-center justify-between gap-3">
           
           {/* Left Side: Mobile Menu Button & Breadcrumb */}
           <div className="flex items-center space-x-3 truncate">
-            {/* Mobile Hamburger Button */}
             <button
               onClick={onOpenMobileSidebar}
-              className="md:hidden p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-black/5 transition-colors"
+              className="md:hidden p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors"
               aria-label="Open navigation menu"
             >
               <Menu className="w-5 h-5" />
@@ -221,27 +242,31 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </div>
           </div>
 
-          {/* Center: Close Cycle Status Badge */}
-          <div className="hidden lg:flex items-center space-x-2 px-3 py-1 rounded-full bg-bg-card border border-border-subtle text-xs font-tabular shadow-subtle">
-            <span className="w-2 h-2 rounded-full bg-status-verified" />
-            <span className="font-medium text-text-primary">Northstar Labs &bull; Sep Close</span>
+          {/* Center: Dynamic Active Workspace Status Badge (No hardcoded values!) */}
+          <div className="hidden lg:flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-pastel-mint border border-pastel-mintBorder text-xs font-tabular shadow-subtle">
+            <span className="w-2 h-2 rounded-full bg-emerald-700 animate-pulse" />
+            <span className="font-semibold text-text-primary">
+              {currencyMeta.flag} {activeWs.name} &bull; {activeWs.closePeriod}
+            </span>
             <span className="text-border-medium">|</span>
-            <span className="text-status-verified font-semibold">97.4% Reconciled</span>
+            <span className="text-emerald-900 font-bold">
+              {metrics.totalTransactions > 0 ? `${metrics.reconciliationRatePct}% Reconciled` : 'Ready for Ingestion'}
+            </span>
           </div>
 
           {/* Right Side: High-Value Actions & Tools */}
-          <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex items-center space-x-2.5 shrink-0">
             
-            {/* Data Mode Switcher (Demo Data vs Own Real Data) */}
+            {/* Data Mode Switcher (Demo Data vs Use Real Data with Workspace Modal) */}
             <div 
               id="tour-data-mode-toggle" 
-              className="flex items-center bg-bg-card p-0.5 rounded-lg border border-border-subtle shadow-subtle text-xs"
+              className="flex items-center bg-bg-primary p-0.5 rounded-full border border-border-subtle text-xs shadow-subtle"
             >
               <button
                 onClick={() => onSwitchDataMode?.('demo')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${
                   dataMode === 'demo'
-                    ? 'bg-accent text-white font-semibold shadow-sm'
+                    ? 'bg-[#0E332E] text-white shadow-sm'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
                 title="Northstar Labs pre-configured multi-currency closing dataset"
@@ -249,27 +274,33 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 Demo Data
               </button>
               <button
-                onClick={() => onSwitchDataMode?.('real')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                onClick={() => {
+                  if (activeWs.isDemo) {
+                    onOpenWorkspaceModal?.();
+                  } else {
+                    onSwitchDataMode?.('real');
+                  }
+                }}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${
                   dataMode === 'real'
-                    ? 'bg-accent text-white font-semibold shadow-sm'
+                    ? 'bg-[#0E332E] text-white shadow-sm'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
-                title="Clean workspace to import and test your own CSV/Excel data"
+                title="Isolated workspace for your own company data"
               >
                 Use Real Data
               </button>
             </div>
 
-            {/* Global Search Button */}
+            {/* Global Search Pill Bar (Reference 5 style) */}
             <button
               onClick={() => setSearchModalOpen(true)}
-              className="flex items-center space-x-2 px-2.5 py-1.5 rounded-md text-xs text-text-muted bg-bg-card border border-border-subtle hover:text-text-primary hover:border-text-secondary/30 transition-all shadow-subtle"
-              title="Search transactions, exceptions, views (⌘K)"
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs text-text-muted bg-bg-primary border border-border-subtle hover:text-text-primary hover:border-text-secondary/40 transition-all shadow-subtle"
+              title="Search transactions, views (⌘K)"
             >
               <Search className="w-3.5 h-3.5 text-text-secondary" />
-              <span className="hidden sm:inline text-[11px]">Search</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono px-1 py-0.2 bg-bg-secondary rounded border border-border-subtle text-text-muted">
+              <span className="hidden sm:inline text-[11px] font-medium">Search...</span>
+              <kbd className="hidden sm:inline text-[10px] font-mono px-1.5 py-0.2 bg-white rounded-full border border-border-subtle text-text-muted">
                 ⌘K
               </kbd>
             </button>
@@ -278,153 +309,119 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <button
               id="tour-tutorial-btn"
               onClick={onStartGuidedDemo}
-              className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle bg-bg-card hover:bg-black/[0.02] transition-colors shadow-subtle"
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-text-secondary hover:text-text-primary border border-border-subtle bg-white hover:bg-bg-primary transition-colors shadow-subtle"
               title="Interactive Controller Walkthrough"
             >
-              <Compass className="w-3.5 h-3.5 text-accent" />
+              <Compass className="w-3.5 h-3.5 text-emerald-700" />
               <span>Tour</span>
             </button>
 
-            {/* Notifications Bell with Dropdown */}
+            {/* Run Close Action Button */}
+            <button
+              id="tour-run-close-btn"
+              onClick={onRunClose}
+              disabled={isRunningClose}
+              className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-[#0E332E] hover:bg-bg-darkHover text-white text-xs font-semibold transition-all shadow-subtle active:scale-[0.98] disabled:opacity-50"
+              title="Execute full autonomous reconciliation and verification cycle"
+            >
+              <Play className={`w-3 h-3 ${isRunningClose ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isRunningClose ? 'Closing...' : 'Run Close'}</span>
+            </button>
+
+            {/* Notifications Bell */}
             <div className="relative">
               <button
                 onClick={() => {
                   setNotificationsOpen(!notificationsOpen);
                   setUserMenuOpen(false);
                 }}
-                className={`p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-black/5 transition-colors border border-border-subtle bg-bg-card shadow-subtle relative ${
-                  notificationsOpen ? 'bg-bg-subtle text-text-primary' : ''
+                className={`p-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors border border-border-subtle bg-white shadow-subtle relative ${
+                  notificationsOpen ? 'bg-bg-primary text-text-primary' : ''
                 }`}
                 title="Recent Autonomous Close Events"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent ring-2 ring-white" />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-review animate-ping" />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-review" />
               </button>
 
               {notificationsOpen && (
-                <div 
-                  className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-border-subtle shadow-modal z-50 overflow-hidden animate-fade-in"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="px-4 py-2.5 border-b border-border-subtle flex items-center justify-between bg-bg-secondary">
-                    <span className="font-semibold text-xs text-text-primary">Recent Close Events</span>
-                    <span className="text-[10px] text-text-muted font-mono">3 new</span>
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white border border-border-subtle shadow-modal z-50 p-4 space-y-3 animate-fade-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
+                    <span className="text-xs font-semibold text-text-primary">Autonomous Close Events</span>
+                    <span className="text-[10px] text-text-muted font-mono">Live Telemetry</span>
                   </div>
-                  <div className="divide-y divide-border-subtle/50 max-h-72 overflow-y-auto">
-                    {notifications.map((n) => {
-                      const Icon = n.icon;
-                      return (
-                        <div key={n.id} className="p-3 hover:bg-bg-subtle transition-colors text-xs space-y-1">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-1.5 font-medium text-text-primary">
-                              <Icon className={`w-3.5 h-3.5 ${n.iconColor}`} />
-                              <span>{n.title}</span>
-                            </div>
-                            <span className="text-[10px] text-text-muted">{n.time}</span>
-                          </div>
-                          <p className="text-[11px] text-text-secondary pl-5">{n.desc}</p>
+                  <div className="space-y-2">
+                    {notifications.map((item) => (
+                      <div key={item.id} className="p-2.5 rounded-xl bg-bg-primary border border-border-subtle flex items-start space-x-2.5 text-xs">
+                        <item.icon className={`w-4 h-4 mt-0.5 shrink-0 ${item.iconColor}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-text-primary truncate">{item.title}</div>
+                          <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{item.desc}</p>
+                          <span className="text-[10px] text-text-muted font-mono block mt-1">{item.time}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                  <div className="px-4 py-2 bg-bg-secondary border-t border-border-subtle text-center">
-                    <button
-                      onClick={() => {
-                        setCurrentTab('audit-vault');
-                        setNotificationsOpen(false);
-                      }}
-                      className="text-[11px] text-accent font-medium hover:underline"
-                    >
-                      View Immutable Audit Vault &rarr;
-                    </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Reset Demo Button */}
-            {dataMode === 'demo' && (
-              <button
-                onClick={onResetDemo}
-                title="Reset Demo Dataset"
-                className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle bg-bg-card hover:bg-black/[0.02] transition-colors shadow-subtle"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </button>
-            )}
-
-            {/* Primary Action: Run Close */}
-            <button
-              id="tour-run-close-btn"
-              onClick={onRunClose}
-              disabled={isRunningClose}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-accent text-white hover:bg-accent-hover active:scale-[0.98] transition-all shadow-subtle disabled:opacity-50"
-            >
-              <Play className={`w-3.5 h-3.5 ${isRunningClose ? 'animate-spin' : ''}`} />
-              <span>{isRunningClose ? 'Closing...' : 'Run Close'}</span>
-            </button>
-
-            {/* User Profile Quick Menu */}
+            {/* User Profile Avatar with Logout Dropdown */}
             <div className="relative">
               <button
                 onClick={() => {
                   setUserMenuOpen(!userMenuOpen);
                   setNotificationsOpen(false);
                 }}
-                className="w-7 h-7 rounded bg-text-primary text-white flex items-center justify-center font-mono font-bold text-[10px] shadow-subtle hover:ring-2 hover:ring-accent/30 transition-all"
-                title="Marcus Vance (Controller)"
+                className="w-8 h-8 rounded-full bg-pastel-mint text-text-primary font-bold text-xs flex items-center justify-center border border-pastel-mintBorder shadow-subtle hover:ring-2 hover:ring-emerald-700/30 transition-all"
+                title="Account & Settings"
               >
-                MV
+                BS
               </button>
 
               {userMenuOpen && (
-                <div 
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-border-subtle shadow-modal z-50 py-1.5 divide-y divide-border-subtle/50 text-xs animate-fade-in"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="px-3.5 py-2">
-                    <div className="font-semibold text-text-primary">Marcus Vance</div>
-                    <div className="text-[10px] text-text-muted">marcus.vance@northstarlabs.com</div>
-                    <div className="mt-1 flex items-center space-x-1 text-[10px] text-status-verified font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-status-verified" />
-                      <span>Controller Sign-Off Authority</span>
-                    </div>
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-border-subtle shadow-modal z-50 py-2 divide-y divide-border-subtle/50 animate-fade-in text-xs">
+                  <div className="px-4 py-2">
+                    <div className="font-semibold text-text-primary">Budiono Siregar</div>
+                    <div className="text-[10px] text-text-muted">budiono@ledgerproof.internal</div>
                   </div>
 
                   <div className="py-1">
                     <button
                       onClick={() => {
-                        onOpenSettings();
                         setUserMenuOpen(false);
+                        onOpenWorkspaceModal?.();
                       }}
-                      className="w-full px-3.5 py-1.5 text-left flex items-center space-x-2 text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors"
+                      className="w-full px-4 py-2 text-left hover:bg-bg-primary text-text-secondary flex items-center space-x-2"
+                    >
+                      <Building2 className="w-3.5 h-3.5 text-text-muted" />
+                      <span>Switch Company Workspace</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onOpenSettings();
+                      }}
+                      className="w-full px-4 py-2 text-left hover:bg-bg-primary text-text-secondary flex items-center space-x-2"
                     >
                       <Sliders className="w-3.5 h-3.5 text-text-muted" />
-                      <span>System Settings</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        onOpenHelp();
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full px-3.5 py-1.5 text-left flex items-center space-x-2 text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors"
-                    >
-                      <BookOpen className="w-3.5 h-3.5 text-text-muted" />
-                      <span>Help & Documentation</span>
+                      <span>Governance Settings</span>
                     </button>
                   </div>
 
                   <div className="py-1">
                     <button
                       onClick={() => {
-                        onResetDemo();
                         setUserMenuOpen(false);
+                        if (onLogout) onLogout();
+                        else setCurrentTab('landing');
                       }}
-                      className="w-full px-3.5 py-1.5 text-left flex items-center space-x-2 text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors"
+                      className="w-full px-4 py-2 text-left hover:bg-pastel-pink/40 text-status-blocked flex items-center space-x-2 font-semibold"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 text-text-muted" />
-                      <span>Reset Sandbox State</span>
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Log Out</span>
                     </button>
                   </div>
                 </div>
@@ -436,129 +433,73 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </div>
       </header>
 
-      {/* Global Command Palette / Search Dialog */}
+      {/* Global Search Modal (⌘K) */}
       {searchModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-start justify-center pt-20 px-4 animate-fade-in"
-          onClick={() => setSearchModalOpen(false)}
-        >
-          <div 
-            className="w-full max-w-lg bg-white rounded-xl border border-border-subtle shadow-modal overflow-hidden animate-fade-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Search Input Bar */}
-            <div className="flex items-center px-4 py-3 border-b border-border-subtle">
-              <Search className="w-4 h-4 text-text-muted shrink-0 mr-3" />
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl border border-border-subtle shadow-modal w-full max-w-xl overflow-hidden space-y-3 p-4">
+            <div className="flex items-center space-x-2.5 pb-2 border-b border-border-subtle">
+              <Search className="w-4 h-4 text-text-muted" />
               <input
                 type="text"
                 autoFocus
-                placeholder="Search exceptions, telemetry, policies, accounts..."
+                placeholder="Search transactions, vendors, reports, views..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-sm text-text-primary placeholder:text-text-muted focus:outline-none bg-transparent"
+                className="w-full text-xs text-text-primary bg-transparent focus:outline-none"
               />
               <button
                 onClick={() => setSearchModalOpen(false)}
-                className="p-1 text-text-muted hover:text-text-primary rounded hover:bg-black/5 transition-colors"
+                className="p-1 rounded-md text-text-muted hover:text-text-primary"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Results or Quick Nav */}
-            <div className="max-h-80 overflow-y-auto p-2 divide-y divide-border-subtle/40 text-xs">
-              {searchQuery.trim() === '' ? (
-                <div className="p-2 space-y-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                    Quick Navigation
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {[
-                      { id: 'command-center', label: 'Command Center' },
-                      { id: 'exceptions', label: 'Exception Inbox' },
-                      { id: 'agent-lab', label: 'Agent Lab' },
-                      { id: 'evaluations', label: 'Evaluation Lab' },
-                      { id: 'policies', label: 'Policy Center' },
-                      { id: 'audit-vault', label: 'Audit Vault' },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setCurrentTab(item.id);
-                          setSearchModalOpen(false);
-                        }}
-                        className="flex items-center space-x-2 p-2 rounded-md hover:bg-bg-subtle text-left text-text-secondary hover:text-text-primary transition-colors border border-border-subtle/40"
-                      >
-                        <ArrowRight className="w-3.5 h-3.5 text-accent" />
-                        <span className="font-medium">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-text-muted pt-2">
-                    Key Exceptions
-                  </div>
-                  <div className="space-y-1">
-                    {transactions.filter(t => t.category !== undefined).slice(0, 3).map((tx) => (
-                      <button
-                        key={tx.id}
-                        onClick={() => {
-                          if (onOpenDecisionTrace) {
-                            onOpenDecisionTrace(tx.id);
-                          } else {
-                            setCurrentTab('exceptions');
-                          }
-                          setSearchModalOpen(false);
-                        }}
-                        className="w-full flex items-center justify-between p-2 rounded-md hover:bg-bg-subtle text-left transition-colors border border-border-subtle/40"
-                      >
-                        <div>
-                          <span className="font-medium text-text-primary">{tx.vendor}</span>
-                          <span className="text-[11px] text-text-muted ml-2 font-mono">{tx.id}</span>
-                        </div>
-                        <span className="font-mono font-semibold text-text-primary">
-                          ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : searchResults.length === 0 ? (
-                <div className="py-8 text-center text-text-muted">
-                  No matching views, transactions, or policies found.
+            <div className="max-h-72 overflow-y-auto space-y-1">
+              {searchResults.length > 0 ? (
+                searchResults.map((item: any) => (
+                  <button
+                    key={`${item.type}-${item.id}`}
+                    onClick={() => {
+                      setSearchModalOpen(false);
+                      if (item.type === 'transaction') {
+                        onOpenDecisionTrace?.(item.id);
+                      } else {
+                        setCurrentTab(item.id);
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-xl hover:bg-bg-primary text-left text-xs flex items-center justify-between transition-colors"
+                  >
+                    <div>
+                      <div className="font-semibold text-text-primary">{item.title}</div>
+                      <div className="text-[11px] text-text-muted">{item.subtitle}</div>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-text-muted" />
+                  </button>
+                ))
+              ) : searchQuery ? (
+                <div className="p-4 text-center text-xs text-text-muted">
+                  No matches found for &ldquo;{searchQuery}&rdquo;.
                 </div>
               ) : (
-                <div className="space-y-1 p-1">
-                  {searchResults.map((res, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        if (res.type === 'view') {
-                          setCurrentTab(res.id);
-                        } else if (res.type === 'transaction' && onOpenDecisionTrace) {
-                          onOpenDecisionTrace(res.id);
-                        } else {
-                          setCurrentTab('exceptions');
-                        }
-                        setSearchModalOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between p-2 rounded-md hover:bg-bg-subtle text-left transition-colors"
-                    >
-                      <div>
-                        <div className="font-medium text-text-primary">{res.title}</div>
-                        <div className="text-[11px] text-text-muted">{res.subtitle}</div>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-text-muted" />
-                    </button>
-                  ))}
+                <div className="p-3 text-xs text-text-muted space-y-1">
+                  <div className="font-semibold text-text-secondary">Quick Navigation:</div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {['command-center', 'exceptions', 'reports', 'data-sources', 'observability'].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => {
+                          setCurrentTab(t);
+                          setSearchModalOpen(false);
+                        }}
+                        className="px-2.5 py-1 rounded-full bg-bg-primary border border-border-subtle text-[11px] hover:bg-bg-subtle text-text-secondary"
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
-
-            {/* Footer */}
-            <div className="px-4 py-2 bg-bg-secondary border-t border-border-subtle flex items-center justify-between text-[11px] text-text-muted">
-              <span>Press <kbd className="font-mono px-1 py-0.5 bg-white rounded border border-border-subtle">ESC</kbd> to close</span>
-              <span>LedgerProof Fast Search</span>
             </div>
           </div>
         </div>
