@@ -33,11 +33,21 @@ async function main() {
       tags: ['track-2', 'autonomous-office-cfo', 'hackathon-rescue', 'local-intelligence'],
       metadata: {
         workflow: 'month_end_close',
-        runtime: 'local-intelligence',
+        workflow_run_id: 'RUN-2026-CLOSE-NORTHSTAR-01',
+        inference_mode: 'local-intelligence',
+        external_ai_api_cost_usd: 0,
         track: 'autonomous-office-cfo',
         dataset: 'northstar-demo',
         processing_mode: 'local',
-        API_cost: 0.00
+        agent_version: '2.4.0',
+        verifier_version: '2.4.0',
+        policy_version: '2026.1',
+        record_count: 40,
+        exception_count: 7,
+        currency_count: 7,
+        risk_level: 'MEDIUM_MATERIAL',
+        autonomy_tier: 'TIER_C_ESCALATE',
+        zero_paid_llm_required: true,
       },
       debug: true
     });

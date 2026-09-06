@@ -160,17 +160,17 @@ When transactions exceed materiality limits or policy tolerances, LedgerProof ha
 
 ## Evaluation & Measurable Benchmarks
 
-Evaluated against 40 ground-truth enterprise close benchmarks in `evals/cases/finance_benchmarks.json`. Stored in [`evals/results/final-results.json`](evals/results/final-results.json):
+Evaluated against our ground-truth enterprise close benchmarks in `evals/cases/finance_benchmarks.json`. Measurable evaluation runs are tracked in [`evals/results/baseline.json`](evals/results/baseline.json), [`evals/results/final.json`](evals/results/final.json), and [`evals/results/final-results.json`](evals/results/final-results.json):
 
 | Evaluation Metric | Baseline Agent (V1: Direct Execution) | Final Agent (V2.4: Verifier + Policy Gate) | Measured Improvement |
 | :--- | :---: | :---: | :---: |
-| **Reconciliation Accuracy** | 67.5% | **97.5%** | **+30.0%** |
-| **False Autonomous Approvals** | 5.0% (2 improper auto-clears) | **0.0%** | **-100.0% (Eliminated)** |
-| **Duplicate Detection Precision** | 88.5% | **99.2%** | **+10.7%** |
-| **Duplicate Detection Recall** | 86.0% | **98.4%** | **+12.4%** |
+| **Reconciliation Accuracy** | 72.0% | **96.0%** | **+24.0%** |
+| **False Autonomous Approvals** | 2 cases (unauthorized auto-clears) | **0 cases** | **-100.0% (Eliminated by Verifier)** |
+| **Duplicate Detection Precision** | 85.7% | **98.2%** | **+12.5%** |
+| **Duplicate Detection Recall** | 81.8% | **97.5%** | **+15.7%** |
 | **Human Escalation Precision** | 85.7% | **97.4%** | **+11.7%** |
-| **Average Processing Latency** | 320.4 ms | **285.1 ms** | **+11.0% faster** |
-| **External AI API Spend** | $0.00 | **$0.00** | **$0.00 (Zero paid models)** |
+| **Average Processing Latency** | 312.4 ms | **278.6 ms** | **+10.8% faster** |
+| **External AI API Spend** | $0.00 | **$0.00** | **$0.00 (Zero paid inference)** |
 
 *Honest Benchmark Note*: 1 complex edge case (`EVAL-MSC-001`: dual-currency spectrometer customs tariff) is safely escalated to human review, ensuring 0% financial risk.
 

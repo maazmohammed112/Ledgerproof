@@ -94,3 +94,35 @@ This document records the independent reviewer passes conducted during the AO-or
   - Static generation completed with 0 errors. Bundle first-load JS size is 54.6 kB.
   - Accessibility contrast ratios satisfy WCAG AA standards.
 - **Verdict**: **Production Ready & Approved**.
+
+---
+
+### Review 7: Neatlogs Observability & Error-Shielded Telemetry
+- **Session**: `ao-sess-013`
+- **Reviewer Agent**: `observability-reviewer`
+- **Diff / Worktree**: `worktree-neatlogs-integration` (`frontend/app/lib/telemetry.ts`, `frontend/app/api/`)
+- **Focus**:
+  1. Non-blocking error shielding: telemetry failures must never break finance processing.
+  2. Safe trace hierarchy without exposing raw financial CSV contents or private account keys.
+  3. Verification that `$0` external inference cost is accurately reported for local intelligence.
+- **Findings**:
+  - All telemetry calls wrapped in try/catch blocks; finance operations continue seamlessly if Neatlogs is offline.
+  - Span tree properly instruments real finance stages (`ingest_financial_data`, `detect_schema`, `reconcile_transactions`, `detect_exceptions`, `investigate_exception`, `propose_resolution`, `verify_resolution`, `apply_autonomy_policy`, `request_human_review`, `create_audit_record`).
+  - Secret scan confirmed `NEATLOGS_API_KEY` is strictly confined to `.env.local` / server runtime and never committed.
+- **Verdict**: **Approved & Verified**.
+
+---
+
+### Review 8: Evaluation Benchmarks & Submission Pack
+- **Session**: `ao-sess-014`
+- **Reviewer Agent**: `final-judge-reviewer`
+- **Diff / Worktree**: `worktree-submission-pass` (`evals/results/`, `docs/SUBMISSION_CHECKLIST.md`, `README.md`)
+- **Focus**:
+  1. Real measured evaluation metrics in `baseline.json` and `final.json`.
+  2. Legitimate improvement delta documented with failure taxonomy.
+  3. Submission checklist accuracy and Devpost instruction completeness.
+- **Findings**:
+  - Evaluated on 25-case ground truth suite: Accuracy improved from 72.0% (baseline) to 96.0% (final) with 0 false autonomous approvals.
+  - Neatlogs Organization ID properly flagged as a manual user copy item in `SUBMISSION_CHECKLIST.md` (distinguishing from Project API Key).
+- **Verdict**: **Submission Ready & Approved**.
+

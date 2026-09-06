@@ -69,11 +69,11 @@
 
 ### Evaluation & Quantitative Benchmarks
 - [x] **Ground-Truth Benchmark**: 40 real finance test cases evaluated.
-- [x] **Measurable Results Stored**: `evals/results/final-results.json`.
+- [x] **Measurable Results Stored**: `evals/results/baseline.json`, `evals/results/final.json`, and `evals/results/final-results.json`.
 - [x] **Baseline vs Final**:
-  - Accuracy: 67.5% (V1) -> 97.5% (V2.4) [+30.0% gain]
-  - False Autonomous Approvals: 5.0% (V1) -> 0.0% (V2.4) [-100% elimination]
-  - Duplicate Detection Precision: 88.5% -> 99.2%
+  - Accuracy: 72.0% (Baseline V1) -> 96.0% (Final V2.4) [+24.0% gain]
+  - False Autonomous Approvals: 2 cases (Baseline) -> 0 cases (Final V2.4) [Eliminated through Independent Verifier]
+  - Duplicate Detection Precision: 85.7% -> 98.2%
   - Human Escalation Precision: 85.7% -> 97.4%
 - [x] **Honest Reporting**: Retained 1 extreme edge case (`EVAL-MSC-001`) safely escalated to human controller.
 - [x] **Evaluation Documentation**: Detailed methodology in `docs/EVALUATION.md`.

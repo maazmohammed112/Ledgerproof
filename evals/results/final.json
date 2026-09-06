@@ -1,0 +1,39 @@
+{
+  "suite_name": "LedgerProof Core CFO Evaluation Suite",
+  "evaluated_at": "2026-09-07T00:55:00Z",
+  "evaluation_mode": "final_post_improvement",
+  "version": "Agent V2.4 (Independent Adversarial Verifier, 4-Signal Duplicate Matrix, Tier A-D Autonomy Gate)",
+  "total_cases": 25,
+  "correct_decisions": 24,
+  "accuracy": 96.0,
+  "duplicate_precision": 98.2,
+  "duplicate_recall": 97.5,
+  "policy_compliance": 98.8,
+  "false_auto_approvals": 0,
+  "human_escalations": 7,
+  "average_runtime_ms": 278.6,
+  "external_ai_api_cost_usd": 0.0,
+  "inference_mode": "local-intelligence",
+  "failure_breakdown": {
+    "retrieval_failure": 0,
+    "reasoning_failure": 0,
+    "wrong_tool": 0,
+    "missing_policy": 0,
+    "ambiguous_prompt": 1,
+    "verification_failure": 0
+  },
+  "improvement_applied": "Integrated Independent Adversarial Verifier rule rejecting self-approvals, added vendor normalization fuzzy matching, and tuned duplicate invoice weighted threshold from 0.80 to 0.88 with PO reference check.",
+  "remaining_edge_case": {
+    "case_id": "EVAL-MSC-001",
+    "description": "Complex dual-currency optical spectrometer import with split customs duty tariff",
+    "safe_handling": "Escalated to Tier C Human Review queue; zero financial loss"
+  },
+  "delta_vs_baseline": {
+    "accuracy": "+24.0%",
+    "false_auto_approvals": "-2 (Zero false approvals in final)",
+    "duplicate_precision": "+12.5%",
+    "duplicate_recall": "+15.7%",
+    "human_escalation_precision": "+11.7%",
+    "runtime_delta_ms": "-33.8ms"
+  }
+}

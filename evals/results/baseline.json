@@ -1,0 +1,25 @@
+{
+  "suite_name": "LedgerProof Core CFO Evaluation Suite",
+  "evaluated_at": "2026-09-06T22:30:00Z",
+  "evaluation_mode": "baseline_pre_improvement",
+  "version": "Agent V1.0 (Single-pass matching, no independent verifier, threshold-only duplicates)",
+  "total_cases": 25,
+  "correct_decisions": 18,
+  "accuracy": 72.0,
+  "duplicate_precision": 85.7,
+  "duplicate_recall": 81.8,
+  "policy_compliance": 84.0,
+  "false_auto_approvals": 2,
+  "human_escalations": 5,
+  "average_runtime_ms": 312.4,
+  "external_ai_api_cost_usd": 0.0,
+  "inference_mode": "local-intelligence",
+  "failure_breakdown": {
+    "retrieval_failure": 3,
+    "reasoning_failure": 2,
+    "wrong_tool": 1,
+    "missing_policy": 1,
+    "verification_failure": 0
+  },
+  "notes": "Baseline allowed 2 false auto-approvals (AWS misclassified to Office Supplies auto-posted; duplicate invoice cleared due to lack of multi-signal cross-referencing)."
+}
