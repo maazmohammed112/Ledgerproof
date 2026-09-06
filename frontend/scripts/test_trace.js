@@ -1,8 +1,26 @@
 const neatlogs = require('neatlogs');
+const fs = require('fs');
+const path = require('path');
+
+function getApiKey() {
+  if (process.env.NEATLOGS_API_KEY) return process.env.NEATLOGS_API_KEY;
+  const envPaths = [
+    path.join(__dirname, '..', '.env.local'),
+    path.join(__dirname, '..', '..', '.env.local')
+  ];
+  for (const p of envPaths) {
+    if (fs.existsSync(p)) {
+      const content = fs.readFileSync(p, 'utf8');
+      const match = content.match(/NEATLOGS_API_KEY=([^\r\n]+)/);
+      if (match && match[1]) return match[1].trim();
+    }
+  }
+  return '';
+}
 
 async function main() {
   console.log('Testing Neatlogs initialization with provided demo key...');
-  const apiKey = process.env.NEATLOGS_API_KEY || '';
+  const apiKey = getApiKey();
   if (!apiKey) {
     console.error('NEATLOGS_API_KEY is not set. Please set it in your environment or .env.local.');
     return;
