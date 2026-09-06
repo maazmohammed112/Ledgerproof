@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" width="900" height="480" style="background:#F9F8F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.06"/>
+    </filter>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#3730A3"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#15803D"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Header Section -->
+  <rect x="30" y="24" width="840" height="60" rx="10" fill="#FFFFFF" stroke="#E5E3DD" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="50" y="58" font-size="16" font-weight="700" fill="#1C1917" letter-spacing="0.5">AGENT ORCHESTRATOR (AO) — DEVELOPMENT LIFECYCLE PIPELINE</text>
+  <rect x="730" y="38" width="120" height="30" rx="6" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1"/>
+  <text x="745" y="58" font-size="12" font-weight="600" fill="#4338CA">Track 2: Office of CFO</text>
+
+  <!-- Level 1: AO Orchestrator Root -->
+  <g transform="translate(300, 110)">
+    <rect width="300" height="60" rx="8" fill="url(#primaryGrad)" filter="url(#shadow)"/>
+    <text x="150" y="32" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">AO Orchestrator</text>
+    <text x="150" y="48" font-size="11" fill="#E0E7FF" text-anchor="middle">Coordinates 8 Specialized Worker Sessions</text>
+  </g>
+
+  <!-- Connecting Lines from Orchestrator to Workers -->
+  <path d="M 450 170 L 450 200 M 130 200 L 770 200 M 130 200 L 130 220 M 290 200 L 290 220 M 450 200 L 450 220 M 610 200 L 610 220 M 770 200 L 770 220" fill="none" stroke="#A8A29E" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+  <!-- Level 2: Specialized Workers (Isolated Worktrees) -->
+  <!-- Worker 1 -->
+  <g transform="translate(50, 220)">
+    <rect width="160" height="85" rx="8" fill="#FFFFFF" stroke="#E5E3DD" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="8" y="8" width="144" height="22" rx="4" fill="#F3F4F6"/>
+    <text x="80" y="23" font-size="11" font-weight="700" fill="#374151" text-anchor="middle">finance-core</text>
+    <text x="80" y="48" font-size="10" fill="#6B7280" text-anchor="middle">Decimal Math Engine</text>
+    <text x="80" y="62" font-size="10" fill="#6B7280" text-anchor="middle">Multi-Currency (7 ISO)</text>
+    <text x="80" y="76" font-size="9" font-weight="600" fill="#4F46E5" text-anchor="middle">Git: worktree-money</text>
+  </g>
+
+  <!-- Worker 2 -->
+  <g transform="translate(210, 220)">
+    <rect width="160" height="85" rx="8" fill="#FFFFFF" stroke="#E5E3DD" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="8" y="8" width="144" height="22" rx="4" fill="#F3F4F6"/>
+    <text x="80" y="23" font-size="11" font-weight="700" fill="#374151" text-anchor="middle">reconciliation</text>
+    <text x="80" y="48" font-size="10" fill="#6B7280" text-anchor="middle">3-Way Match Algorithm</text>
+    <text x="80" y="62" font-size="10" fill="#6B7280" text-anchor="middle">Multi-Signal Duplicates</text>
+    <text x="80" y="76" font-size="9" font-weight="600" fill="#4F46E5" text-anchor="middle">Git: worktree-reconcile</text>
+  </g>
+
+  <!-- Worker 3 -->
+  <g transform="translate(370, 220)">
+    <rect width="160" height="85" rx="8" fill="#FFFFFF" stroke="#E5E3DD" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="8" y="8" width="144" height="22" rx="4" fill="#F3F4F6"/>
+    <text x="80" y="23" font-size="11" font-weight="700" fill="#374151" text-anchor="middle">verifier-agent</text>
+    <text x="80" y="48" font-size="10" fill="#6B7280" text-anchor="middle">Adversarial Verifier</text>
+    <text x="80" y="62" font-size="10" fill="#6B7280" text-anchor="middle">Zero Self-Approval Rule</text>
+    <text x="80" y="76" font-size="9" font-weight="600" fill="#4F46E5" text-anchor="middle">Git: worktree-verifier</text>
+  </g>
+
+  <!-- Worker 4 -->
+  <g transform="translate(530, 220)">
+    <rect width="160" height="85" rx="8" fill="#FFFFFF" stroke="#E5E3DD" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="8" y="8" width="144" height="22" rx="4" fill="#F3F4F6"/>
+    <text x="80" y="23" font-size="11" font-weight="700" fill="#374151" text-anchor="middle">observability</text>
+    <text x="80" y="48" font-size="10" fill="#6B7280" text-anchor="middle">Neatlogs SDK Tracing</text>
+    <text x="80" y="62" font-size="10" fill="#6B7280" text-anchor="middle">Server Telemetry Proxy</text>
+    <text x="80" y="76" font-size="9" font-weight="600" fill="#4F46E5" text-anchor="middle">Git: worktree-neatlogs</text>
+  </g>
+
+  <!-- Worker 5 -->
+  <g transform="translate(690, 220)">
+    <rect width="160" height="85" rx="8" fill="#FFFFFF" stroke="#E5E3DD" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="8" y="8" width="144" height="22" rx="4" fill="#F3F4F6"/>
+    <text x="80" y="23" font-size="11" font-weight="700" fill="#374151" text-anchor="middle">eval-review</text>
+    <text x="80" y="48" font-size="10" fill="#6B7280" text-anchor="middle">40 Ground Truth Cases</text>
+    <text x="80" y="62" font-size="10" fill="#6B7280" text-anchor="middle">V1 vs V2 Comparison</text>
+    <text x="80" y="76" font-size="9" font-weight="600" fill="#4F46E5" text-anchor="middle">Git: worktree-evals</text>
+  </g>
+
+  <!-- Connecting Lines from Workers to Review Gate -->
+  <path d="M 130 305 L 130 330 M 290 305 L 290 330 M 450 305 L 450 330 M 610 305 L 610 330 M 770 305 L 770 330 M 130 330 L 770 330 M 450 330 L 450 350" fill="none" stroke="#A8A29E" stroke-width="1.5"/>
+
+  <!-- Level 3: Independent Reviewer & CI Gates -->
+  <g transform="translate(180, 350)">
+    <rect width="540" height="45" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="270" y="24" font-size="12" font-weight="700" fill="#92400E" text-anchor="middle">Independent Reviewers (Finance, Security, Frontend, Judge)</text>
+    <text x="270" y="38" font-size="10" fill="#B45309" text-anchor="middle">Automated Validation Gates: Pytest (15/15 Pass) + Next.js Production Build (0 Errors)</text>
+  </g>
+
+  <!-- Arrow to Main Merge -->
+  <path d="M 450 395 L 450 415" fill="none" stroke="#15803D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Level 4: Merged LedgerProof Main -->
+  <g transform="translate(250, 415)">
+    <rect width="400" height="45" rx="8" fill="url(#accentGrad)" filter="url(#shadow)"/>
+    <text x="200" y="27" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">LedgerProof Main Release (Autonomous Control Layer)</text>
+    <text x="200" y="40" font-size="10" fill="#DCFCE7" text-anchor="middle">Proven Work • Verifiable Decisions • SOX-Ready Evidence</text>
+  </g>
+</svg>

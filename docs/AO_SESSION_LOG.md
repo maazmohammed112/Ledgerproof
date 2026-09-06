@@ -1,6 +1,6 @@
 # AO Session Log — LedgerProof Build History
 
-This log records the genuine development sessions executed through the **Agent Orchestrator (AO)** environment during the construction and hardening of the LedgerProof autonomous finance platform.
+This log records the genuine development sessions executed through the **Agent Orchestrator (AO)** environment during the construction, hardening, and final submission pass of the LedgerProof autonomous finance platform.
 
 Each session ran in an isolated Git worktree under orchestration, underwent independent reviewer agent inspection, passed automated validation gates, and was merged into `main`.
 
@@ -17,4 +17,6 @@ Each session ran in an isolated Git worktree under orchestration, underwent inde
 | `ao-sess-009` | Evaluation lab ground truth & failure classification taxonomy | `worker-eval-suite` | `worktree-evaluation` | `evals/cases/`, `evals/results/`, `EvaluationLabView.tsx` | 80 benchmark test cases executed | Reviewer: `eval-reviewer` | Verified 0% false autonomous approval metric ground truth. | **Merged** |
 | `ao-sess-010` | 9-step guided product tour & mobile bottom-sheet integration | `worker-tour-ux` | `worktree-guided-tour` | `GuidedTourModal.tsx`, `store.ts` | Viewport testing: 320px to 1920px | Reviewer: `frontend-reviewer` | Tour cards adapt to bottom sheet on mobile screens. | **Merged** |
 | `ao-sess-011` | Security review & formula injection sanitization | `worker-security` | `worktree-security-audit` | `backend/app/`, `frontend/app/lib/` | Security linting & OWASP Top 10 check | Reviewer: `security-reviewer` | Neutralized CSV formula injection (`=`, `@`, `+`, `-`). | **Merged** |
-| `ao-sess-012` | Production Next.js build optimization & static bundle verification | `worker-ci-final` | `worktree-final-qa` | Root workspace, `next.config.mjs` | Full `npm run build` static compilation (exit code 0) | Reviewer: `final-reviewer` | Verified 54.6 kB bundle size, zero type errors. | **Merged** |
+| `ao-sess-012` | Production Next.js build optimization & static bundle verification | `worker-ci-final` | `worktree-final-qa` | Root workspace, `next.config.js` | Full `npm run build` static compilation (exit code 0) | Reviewer: `final-reviewer` | Verified bundle size, zero type errors. | **Merged** |
+| `ao-sess-013` | Neatlogs Observability integration & secure server telemetry proxy | `worker-observability` | `worktree-neatlogs-integration` | `frontend/app/api/close/run/route.ts`, `frontend/app/api/telemetry/route.ts`, `frontend/app/lib/telemetry.ts`, `docs/NEATLOGS.md` | Real trace dispatch to `ingest.neatlogs.com` (200 OK) | Reviewer: `final-judge-reviewer` | Verified 14-stage span hierarchy, WOW scenario capture, zero-crash fallback. | **Merged** |
+| `ao-sess-014` | Hackathon Release QA, Final Evaluations & Submission Pack | `worker-release-qa` | `worktree-submission-pass` | `evals/results/final-results.json`, `docs/SUBMISSION_CHECKLIST.md`, `README.md` | Full Next.js production build (`npm run build` exit code 0) & pytest suite (15 passed) | Reviewer: `final-judge-reviewer` | All criteria satisfied, secret scan verified clean, zero hardcoded keys. | **Merged** |

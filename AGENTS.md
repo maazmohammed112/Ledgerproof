@@ -118,3 +118,20 @@ Continuous Evaluation & Failure Taxonomy
   cd frontend
   npm run dev
   ```
+
+---
+
+## 7. Observability & Neatlogs Conventions
+
+- **Workflow Naming**: Root close workflow must be named `ledgerproof-finance-close`.
+- **Span Kinds**: Use official `WORKFLOW`, `AGENT`, `TOOL`, and `GUARDRAIL` span kinds.
+- **Zero-Crash Resilience**: Telemetry failures must NEVER interrupt or crash financial execution. Always wrap SDK calls in defensive try/catch blocks.
+- **Business Metadata**: Attach safe, non-sensitive audit metadata (record counts, exception counts, currency counts, $0 external API cost).
+
+---
+
+## 8. Git & Security Hygiene
+
+- **Zero Hardcoded Secrets**: `NEATLOGS_API_KEY` and credentials must NEVER be committed to Git, README, bundle, or client storage. Use `.env.local` (gitignored). Only commit `.env.example` with empty values.
+- **Formulas & Inputs**: Sanitize all CSV/XLSX cell values against formula injection (`=`, `@`, `+`, `-`).
+- **Chain of Thought**: Never expose raw model reasoning traces to unauthorized external endpoints.

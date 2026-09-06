@@ -42,4 +42,6 @@ frontend/out/
 .idea/
 .DS_Store
 *.pem
+*.log
 Thumbs.db
+
