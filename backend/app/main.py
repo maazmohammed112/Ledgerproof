@@ -41,6 +41,28 @@ app.add_middleware(
 
 orchestrator = FinanceOrchestrator(agent_version="V2")
 
+# Optional Neatlogs Observability integration
+import os
+neatlogs_client = None
+try:
+    import neatlogs
+    neat_key = os.getenv("NEATLOGS_API_KEY", "")
+    if neat_key:
+        neatlogs.init(
+            api_key=neat_key,
+            workflow_name="ledgerproof-finance-close",
+            tags=["track-2", "autonomous-office-cfo", "fastapi-backend", "local-intelligence"],
+            metadata={
+                "workflow": "month_end_close",
+                "runtime": "local-intelligence",
+                "track": "autonomous-office-cfo",
+                "API_cost": 0.0,
+            }
+        )
+        neatlogs_client = neatlogs
+except Exception as _telemetry_err:
+    pass
+
 
 # Initialize demo traces on startup
 def bootstrap_demo_traces():
@@ -128,6 +150,12 @@ def run_month_end_close():
                 "risk_tier": res["autonomy_result"].tier.value,
             })
             processed_count += 1
+
+    if neatlogs_client:
+        try:
+            neatlogs_client.flush()
+        except Exception:
+            pass
 
     return {
         "message": f"Successfully processed {processed_count} transactions through autonomous close pipeline.",
